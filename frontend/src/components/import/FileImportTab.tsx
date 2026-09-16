@@ -37,7 +37,7 @@ export interface FileImportTabProps {
     initialFile?: File | null;
 }
 
-const CHAPTER_FORMATS: readonly ImportFormat[] = ["markdown", "text", "html"];
+const CHAPTER_FORMATS: readonly ImportFormat[] = ["markdown", "text", "html", "pdf"];
 
 function formatLabelKey(format: ImportFormat): string {
     return `ui.offline_import.format_${format.replace("-", "_")}`;
@@ -56,6 +56,7 @@ export default function FileImportTab({
     const [detecting, setDetecting] = useState(false);
     const [importing, setImporting] = useState(false);
     const [target, setTarget] = useState<"new-book" | "existing-book">("new-book");
+    const [pdfMode, setPdfMode] = useState<"reflow" | "plain">("reflow");
     const [books, setBooks] = useState<Book[]>([]);
     const [bookId, setBookId] = useState("");
 
@@ -65,6 +66,7 @@ export default function FileImportTab({
         setDetecting(false);
         setImporting(false);
         setTarget("new-book");
+        setPdfMode("reflow");
         setBooks([]);
         setBookId("");
     };
@@ -123,6 +125,14 @@ export default function FileImportTab({
                       "Kapitel zu {book} hinzugefügt",
                   ).replace("{book}", result.result.bookTitle);
         }
+        if (result.kind === "pdf") {
+            return t(
+                "ui.offline_import.success_pdf",
+                "PDF importiert: {chapters} Kapitel aus {pages} Seiten",
+            )
+                .replace("{chapters}", String(result.result.chapterIds.length))
+                .replace("{pages}", String(result.result.pageCount));
+        }
         if (result.kind === "backup" || result.kind === "bgb-backup") {
             return t(
                 "ui.offline_import.success_backup",
@@ -142,6 +152,7 @@ export default function FileImportTab({
         setImporting(true);
         try {
             const result = await importFile(file, format, {
+                pdfMode,
                 target:
                     target === "existing-book" && bookId
                         ? { kind: "existing-book", bookId }
@@ -194,7 +205,7 @@ export default function FileImportTab({
                         label={t("ui.offline_import.drop_zone", "Datei hier ablegen oder klicken")}
                         hint={t(
                             "ui.offline_import.accepted",
-                            "Markdown, Text, HTML, JSON-Backup, Medium-Export (.zip), Backup (.bgb).",
+                            "Markdown, Text, HTML, PDF, JSON-Backup, Medium-Export (.zip), Backup (.bgb).",
                         )}
                     />
                 )}
@@ -278,6 +289,61 @@ export default function FileImportTab({
                                         }))}
                                     />
                                 )}
+                            </fieldset>
+                        )}
+
+                        {format === "pdf" && (
+                            <fieldset className="m-0 flex flex-col gap-2 rounded-md border border-[var(--border)] p-3">
+                                <legend className="px-1 text-sm font-medium">
+                                    {t("ui.offline_import.pdf_mode", "PDF-Aufbereitung")}
+                                </legend>
+                                <label className="flex items-start gap-2 text-sm">
+                                    <input
+                                        type="radio"
+                                        name="offline-import-pdf-mode"
+                                        checked={pdfMode === "reflow"}
+                                        onChange={() => setPdfMode("reflow")}
+                                    />
+                                    <span>
+                                        <strong>
+                                            {t("ui.offline_import.pdf_reflow", "Für EPUB anpassen")}
+                                        </strong>
+                                        <span className="block text-xs text-[var(--text-muted)]">
+                                            {t(
+                                                "ui.offline_import.pdf_reflow_hint",
+                                                "Erkennt Überschriften und Absätze und entfernt wiederkehrende Kopf- und Fußzeilen.",
+                                            )}
+                                        </span>
+                                    </span>
+                                </label>
+                                <label className="flex items-start gap-2 text-sm">
+                                    <input
+                                        type="radio"
+                                        name="offline-import-pdf-mode"
+                                        checked={pdfMode === "plain"}
+                                        onChange={() => setPdfMode("plain")}
+                                    />
+                                    <span>
+                                        <strong>
+                                            {t(
+                                                "ui.offline_import.pdf_plain",
+                                                "Nur Text extrahieren",
+                                            )}
+                                        </strong>
+                                        <span className="block text-xs text-[var(--text-muted)]">
+                                            {t(
+                                                "ui.offline_import.pdf_plain_hint",
+                                                "Behält die Lesereihenfolge bei, ohne Überschriften aus dem Layout abzuleiten.",
+                                            )}
+                                        </span>
+                                    </span>
+                                </label>
+                                <p className="m-0 text-xs text-[var(--text-muted)]">
+                                    {t(
+                                        "ui.offline_import.pdf_ocr_hint",
+                                        "Gescannte PDFs ohne Textebene benötigen OCR und werden nicht leer importiert.",
+                                    )}
+                                </p>
                             </fieldset>
                         )}
 
@@ -419,7 +485,7 @@ function FilePicker({
                 }}
                 type="file"
                 data-testid="offline-import-input"
-                accept=".md,.markdown,.txt,.html,.htm,.json,.zip,.bgb"
+                accept=".md,.markdown,.txt,.html,.htm,.pdf,application/pdf,.json,.zip,.bgb"
                 className="hidden"
                 onChange={(e) => {
                     const picked = e.target.files?.[0];

@@ -42,6 +42,10 @@ env:
 
 jobs:
   build:
+    # This workflow belongs to the upstream production site. Forks may keep
+    # the workflow file, but must not fail just because their own Pages site
+    # is intentionally not configured.
+    if: github.repository == 'astrapi69/bibliogon'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -72,6 +76,7 @@ jobs:
           path: frontend/dist
 
   deploy:
+    if: github.repository == 'astrapi69/bibliogon'
     needs: build
     runs-on: ubuntu-latest
     environment:
