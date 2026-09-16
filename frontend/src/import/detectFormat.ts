@@ -21,6 +21,7 @@ export type ImportFormat =
     | "markdown"
     | "text"
     | "html"
+    | "pdf"
     | "bgb"
     | "unknown";
 
@@ -91,6 +92,7 @@ export async function detectImportFormat(file: File): Promise<ImportFormat> {
     if (ext === ".md" || ext === ".markdown") return "markdown";
     if (ext === ".txt") return "text";
     if (ext === ".html" || ext === ".htm") return "html";
+    if (ext === ".pdf" || file.type === "application/pdf") return "pdf";
 
     if (ext === ".json") {
         return (await jsonIsBackupBundle(file)) ? "json-backup" : "unknown";
@@ -111,5 +113,6 @@ export const OFFLINE_SUPPORTED_FORMATS: readonly ImportFormat[] = [
     "markdown",
     "text",
     "html",
+    "pdf",
     "bgb",
 ];

@@ -6,6 +6,7 @@ const {
     importMarkdownAsChapter,
     importTextAsChapter,
     importHtmlAsChapter,
+    importPdf,
     importFullBackup,
     importBgbFile,
     parseMediumZip,
@@ -33,6 +34,16 @@ const {
         chapterTitle: "Html",
         createdBook: true,
     })),
+    importPdf: vi.fn(async () => ({
+        bookId: "b4",
+        bookTitle: "Pdf",
+        chapterIds: ["c4"],
+        chapterTitles: ["Pdf"],
+        createdBook: true,
+        pageCount: 2,
+        removedRepeatedLines: 2,
+        mode: "reflow",
+    })),
     importFullBackup: vi.fn(async () => ({
         imported: { books: 2, articles: 1 },
         skipped: {},
@@ -54,6 +65,7 @@ vi.mock("./chapterImporters", () => ({
     importTextAsChapter,
     importHtmlAsChapter,
 }));
+vi.mock("./pdfImport", () => ({ importPdf }));
 vi.mock("../export/backupImport", () => ({ importFullBackup }));
 vi.mock("./bgbImport", () => ({ importBgbFile }));
 vi.mock("../medium-import/clientImport", () => ({ parseMediumZip, importParsed }));
@@ -70,13 +82,8 @@ beforeEach(() => vi.clearAllMocks());
 describe("importFile routing", () => {
     it("routes markdown/text/html to the chapter importers", async () => {
         const target = { kind: "new-book" } as const;
-        expect((await importFile(file("a.md"), "markdown")).kind).toBe(
-            "chapter",
-        );
-        expect(importMarkdownAsChapter).toHaveBeenCalledWith(
-            expect.any(File),
-            target,
-        );
+        expect((await importFile(file("a.md"), "markdown")).kind).toBe("chapter");
+        expect(importMarkdownAsChapter).toHaveBeenCalledWith(expect.any(File), target);
         expect((await importFile(file("a.txt"), "text")).kind).toBe("chapter");
         expect(importTextAsChapter).toHaveBeenCalled();
         expect((await importFile(file("a.html"), "html")).kind).toBe("chapter");
@@ -91,6 +98,12 @@ describe("importFile routing", () => {
             kind: "existing-book",
             bookId: "x",
         });
+    });
+
+    it("routes PDF through the local reconstruction importer", async () => {
+        const out = await importFile(file("book.pdf"), "pdf", { pdfMode: "plain" });
+        expect(out.kind).toBe("pdf");
+        expect(importPdf).toHaveBeenCalledWith(expect.any(File), { kind: "new-book" }, "plain");
     });
 
     it("routes json-backup to importFullBackup", async () => {

@@ -1,18 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-    PdfNeedsOcrError,
-    reconstructPdfLines,
-    type PdfTextLine,
-} from "./pdfImport";
+import { PdfNeedsOcrError, reconstructPdfLines, type PdfTextLine } from "./pdfImport";
 
-function line(
-    page: number,
-    y: number,
-    fontSize: number,
-    text: string,
-    x = 72,
-): PdfTextLine {
+function line(page: number, y: number, fontSize: number, text: string, x = 72): PdfTextLine {
     return { page, pageHeight: 800, x, y, fontSize, text };
 }
 
@@ -65,9 +55,7 @@ describe("reconstructPdfLines", () => {
             "reflow",
         );
 
-        expect(nodeText(out.chapters[0].doc)).toContain(
-            "reconstruction without preserving",
-        );
+        expect(nodeText(out.chapters[0].doc)).toContain("reconstruction without preserving");
     });
 
     it("offers a plain extraction mode without layout inference", () => {
@@ -84,19 +72,12 @@ describe("reconstructPdfLines", () => {
 
         expect(out.chapters).toHaveLength(1);
         expect(out.chapters[0].title).toBe("plain");
-        expect(nodeText(out.chapters[0].doc)).toContain(
-            "Large text that should stay ordinary",
-        );
+        expect(nodeText(out.chapters[0].doc)).toContain("Large text that should stay ordinary");
     });
 
     it("rejects image-only / effectively empty PDFs with an OCR-specific error", () => {
-        expect(() =>
-            reconstructPdfLines(
-                [line(1, 700, 11, "x")],
-                4,
-                "scan.pdf",
-                "reflow",
-            ),
-        ).toThrow(PdfNeedsOcrError);
+        expect(() => reconstructPdfLines([line(1, 700, 11, "x")], 4, "scan.pdf", "reflow")).toThrow(
+            PdfNeedsOcrError,
+        );
     });
 });

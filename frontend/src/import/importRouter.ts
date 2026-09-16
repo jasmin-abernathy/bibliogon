@@ -22,6 +22,7 @@ import {
     type ChapterImportTarget,
 } from "./chapterImporters";
 import type { ImportFormat } from "./detectFormat";
+import { importPdf, type PdfImportMode, type PdfImportResult } from "./pdfImport";
 
 /** Thrown when a recognised format cannot be imported in the browser. */
 export class OfflineNotSupportedError extends Error {
@@ -46,6 +47,7 @@ export type ImportFileResult =
           format: "markdown" | "text" | "html";
           result: ChapterImportResult;
       }
+    | { kind: "pdf"; format: "pdf"; result: PdfImportResult }
     | { kind: "backup"; format: "json-backup"; result: ImportResult }
     | { kind: "bgb-backup"; format: "bgb"; result: BgbImportResult }
     | { kind: "medium"; format: "medium-zip"; result: MediumImportResponse };
@@ -53,19 +55,17 @@ export type ImportFileResult =
 export interface ImportFileOptions {
     /** Destination for single-file (md/txt/html) imports. Defaults to a new book. */
     target?: ChapterImportTarget;
+    /** PDF reconstruction strategy: semantic EPUB reflow or plain reading order. */
+    pdfMode?: PdfImportMode;
     /** Injectable clock for deterministic Medium preview ids in tests. */
     now?: number;
 }
 
-async function importMediumAll(
-    file: File,
-    now: number,
-): Promise<MediumImportResponse> {
+async function importMediumAll(file: File, now: number): Promise<MediumImportResponse> {
     const { preview, parsed } = await parseMediumZip(file, now);
     const app = await getStorage().settings.getApp();
     const defaultLanguage =
-        ((app.app as Record<string, unknown> | undefined)
-            ?.default_language as string) || "en";
+        ((app.app as Record<string, unknown> | undefined)?.default_language as string) || "en";
     return importParsed(
         parsed,
         preview.items.map((item) => item.filename),
@@ -111,6 +111,12 @@ export async function importFile(
                 kind: "chapter",
                 format,
                 result: await importHtmlAsChapter(file, target),
+            };
+        case "pdf":
+            return {
+                kind: "pdf",
+                format,
+                result: await importPdf(file, target, options.pdfMode ?? "reflow"),
             };
         case "json-backup":
             return {

@@ -77,31 +77,20 @@ function stemOf(filename: string): string {
 }
 
 function normaliseRepeatedText(text: string): string {
-    return text
-        .toLocaleLowerCase()
-        .replace(/\d+/g, "#")
-        .replace(/\s+/g, " ")
-        .trim();
+    return text.toLocaleLowerCase().replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
 }
 
 function median(values: number[]): number {
     if (values.length === 0) return 12;
     const sorted = [...values].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0
-        ? (sorted[mid - 1] + sorted[mid]) / 2
-        : sorted[mid];
+    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
-function repeatedEdgeKeys(
-    lines: PdfTextLine[],
-    pageCount: number,
-): Set<string> {
+function repeatedEdgeKeys(lines: PdfTextLine[], pageCount: number): Set<string> {
     const pagesByKey = new Map<string, Set<number>>();
     for (const line of lines) {
-        const atEdge =
-            line.y <= line.pageHeight * 0.11 ||
-            line.y >= line.pageHeight * 0.89;
+        const atEdge = line.y <= line.pageHeight * 0.11 || line.y >= line.pageHeight * 0.89;
         const key = normaliseRepeatedText(line.text);
         if (!atEdge || key.length < 2 || key.length > 120) continue;
         const pages = pagesByKey.get(key) ?? new Set<number>();
@@ -148,10 +137,7 @@ function isSentenceEnding(text: string): boolean {
     return /[.!?…]["'»”’)]?$/.test(text.trim());
 }
 
-function isHeadingLike(
-    line: PdfTextLine,
-    bodySize: number,
-): "major" | "minor" | null {
+function isHeadingLike(line: PdfTextLine, bodySize: number): "major" | "minor" | null {
     const text = line.text.trim();
     if (text.length < 2 || text.length > 140) return null;
     if (isSentenceEnding(text) && text.length > 55) return null;
@@ -161,9 +147,7 @@ function isHeadingLike(
 
     const letters = text.replace(/[^\p{L}]/gu, "");
     const allCaps =
-        letters.length >= 4 &&
-        letters === letters.toLocaleUpperCase() &&
-        text.length <= 80;
+        letters.length >= 4 && letters === letters.toLocaleUpperCase() && text.length <= 80;
     return allCaps ? "minor" : null;
 }
 
@@ -175,15 +159,10 @@ function makeDoc(content: TipTapNode[]): TipTapDoc {
 }
 
 function sortedLines(lines: PdfTextLine[]): PdfTextLine[] {
-    return [...lines].sort(
-        (a, b) => a.page - b.page || b.y - a.y || a.x - b.x,
-    );
+    return [...lines].sort((a, b) => a.page - b.page || b.y - a.y || a.x - b.x);
 }
 
-function buildPlainChapter(
-    lines: PdfTextLine[],
-    fallbackTitle: string,
-): ReconstructedPdfChapter {
+function buildPlainChapter(lines: PdfTextLine[], fallbackTitle: string): ReconstructedPdfChapter {
     const content: TipTapNode[] = [];
     let page = -1;
     let paragraph = "";
@@ -235,9 +214,7 @@ export function reconstructPdfLines(
 
     const repeated = repeatedEdgeKeys(usable, pageCount);
     const lines = usable.filter((line) => {
-        const atEdge =
-            line.y <= line.pageHeight * 0.11 ||
-            line.y >= line.pageHeight * 0.89;
+        const atEdge = line.y <= line.pageHeight * 0.11 || line.y >= line.pageHeight * 0.89;
         return !(atEdge && repeated.has(normaliseRepeatedText(line.text)));
     });
     const removedRepeatedLines = usable.length - lines.length;
@@ -246,10 +223,7 @@ export function reconstructPdfLines(
     // body text instead of giving a short display heading the same weight as
     // a full prose line.
     const weightedSizes = lines.flatMap((line) =>
-        Array.from(
-            { length: Math.max(1, Math.ceil(line.text.length / 12)) },
-            () => line.fontSize,
-        ),
+        Array.from({ length: Math.max(1, Math.ceil(line.text.length / 12)) }, () => line.fontSize),
     );
     const bodySize = median(weightedSizes.filter((size) => size > 0));
 
@@ -289,17 +263,12 @@ export function reconstructPdfLines(
 
         const samePage = previous?.page === line.page;
         const verticalGap =
-            samePage && previous
-                ? Math.max(0, previous.y - line.y)
-                : bodySize * 1.4;
+            samePage && previous ? Math.max(0, previous.y - line.y) : bodySize * 1.4;
         const indentationChanged =
-            samePage &&
-            previous &&
-            Math.abs(previous.x - line.x) > bodySize * 1.5;
+            samePage && previous && Math.abs(previous.x - line.x) > bodySize * 1.5;
         const shouldBreak =
             paragraph.length > 0 &&
-            (verticalGap > bodySize * 1.75 ||
-                (indentationChanged && isSentenceEnding(paragraph)));
+            (verticalGap > bodySize * 1.75 || (indentationChanged && isSentenceEnding(paragraph)));
 
         if (shouldBreak) flushParagraph();
         paragraph = joinWrapped(paragraph, line.text);
@@ -337,8 +306,7 @@ function groupItemsIntoLines(
     for (const item of [...items].sort((a, b) => b.y - a.y || a.x - b.x)) {
         const tolerance = Math.max(1.5, item.fontSize * 0.18);
         const group = groups.find(
-            (candidate) =>
-                Math.abs((candidate[0]?.y ?? item.y) - item.y) <= tolerance,
+            (candidate) => Math.abs((candidate[0]?.y ?? item.y) - item.y) <= tolerance,
         );
         if (group) group.push(item);
         else groups.push([item]);
@@ -350,11 +318,7 @@ function groupItemsIntoLines(
         let right = Number.NEGATIVE_INFINITY;
         for (const item of sorted) {
             const gap = item.x - right;
-            if (
-                text &&
-                gap > Math.max(1, item.fontSize * 0.16) &&
-                !/\s$/.test(text)
-            ) {
+            if (text && gap > Math.max(1, item.fontSize * 0.16) && !/\s$/.test(text)) {
                 text += " ";
             }
             text += item.text;
@@ -407,9 +371,7 @@ async function extractPdfLines(file: File): Promise<{
                     fontSize,
                 });
             }
-            lines.push(
-                ...groupItemsIntoLines(items, pageNumber, viewport.height),
-            );
+            lines.push(...groupItemsIntoLines(items, pageNumber, viewport.height));
         }
 
         let metadataTitle: string | undefined;
