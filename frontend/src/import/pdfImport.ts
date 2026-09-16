@@ -425,7 +425,7 @@ async function extractPdfLines(file: File): Promise<{
 
         return { lines, pageCount: pdf.numPages, metadataTitle };
     } finally {
-        await pdf.destroy();
+        await loadingTask.destroy();
     }
 }
 
