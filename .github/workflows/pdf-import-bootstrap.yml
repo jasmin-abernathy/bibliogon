@@ -1,0 +1,215 @@
+name: Bootstrap PDF import
+
+on:
+  push:
+    branches: [pdf-import-bootstrap]
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build-pdf-import:
+    if: contains(github.event.head_commit.message, '[pdf-import-bootstrap]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Wire PDF import into the existing import flow
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"Expected source fragment not found in {path}: {old[:100]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace(
+              "frontend/src/import/detectFormat.ts",
+              '    | "html"\n    | "bgb"',
+              '    | "html"\n    | "pdf"\n    | "bgb"',
+          )
+          replace(
+              "frontend/src/import/detectFormat.ts",
+              '    if (ext === ".html" || ext === ".htm") return "html";\n',
+              '    if (ext === ".html" || ext === ".htm") return "html";\n    if (ext === ".pdf" || file.type === "application/pdf") return "pdf";\n',
+          )
+          replace(
+              "frontend/src/import/detectFormat.ts",
+              '    "html",\n    "bgb",',
+              '    "html",\n    "pdf",\n    "bgb",',
+          )
+
+          replace(
+              "frontend/src/import/detectFormat.test.ts",
+              '    it("returns unknown for unrecognised extensions", async () => {\n        expect(await detectImportFormat(file("x", "a.pdf"))).toBe("unknown");\n        expect(await detectImportFormat(file("x", "noext"))).toBe("unknown");\n    });',
+              '    it("detects PDF by extension or MIME type", async () => {\n        expect(await detectImportFormat(file("%PDF", "a.pdf"))).toBe("pdf");\n        const mimePdf = new File(["%PDF"], "upload", { type: "application/pdf" });\n        expect(await detectImportFormat(mimePdf)).toBe("pdf");\n    });\n\n    it("returns unknown for unrecognised extensions", async () => {\n        expect(await detectImportFormat(file("x", "noext"))).toBe("unknown");\n    });',
+          )
+
+          replace(
+              "frontend/src/import/importRouter.ts",
+              'import type { ImportFormat } from "./detectFormat";\n',
+              'import type { ImportFormat } from "./detectFormat";\nimport { importPdf, type PdfImportMode, type PdfImportResult } from "./pdfImport";\n',
+          )
+          replace(
+              "frontend/src/import/importRouter.ts",
+              '          format: "markdown" | "text" | "html";\n          result: ChapterImportResult;\n      }\n',
+              '          format: "markdown" | "text" | "html";\n          result: ChapterImportResult;\n      }\n    | { kind: "pdf"; format: "pdf"; result: PdfImportResult }\n',
+          )
+          replace(
+              "frontend/src/import/importRouter.ts",
+              '    /** Injectable clock for deterministic Medium preview ids in tests. */\n    now?: number;\n',
+              '    /** PDF reconstruction strategy: semantic EPUB reflow or plain reading order. */\n    pdfMode?: PdfImportMode;\n    /** Injectable clock for deterministic Medium preview ids in tests. */\n    now?: number;\n',
+          )
+          replace(
+              "frontend/src/import/importRouter.ts",
+              '        case "json-backup":\n',
+              '        case "pdf":\n            return {\n                kind: "pdf",\n                format,\n                result: await importPdf(\n                    file,\n                    target,\n                    options.pdfMode ?? "reflow",\n                ),\n            };\n        case "json-backup":\n',
+          )
+
+          replace(
+              "frontend/src/import/importRouter.test.ts",
+              '    importHtmlAsChapter,\n    importFullBackup,',
+              '    importHtmlAsChapter,\n    importPdf,\n    importFullBackup,',
+          )
+          replace(
+              "frontend/src/import/importRouter.test.ts",
+              '    importHtmlAsChapter: vi.fn(async () => ({\n        bookId: "b3",\n        bookTitle: "Html",\n        chapterId: "c3",\n        chapterTitle: "Html",\n        createdBook: true,\n    })),\n',
+              '    importHtmlAsChapter: vi.fn(async () => ({\n        bookId: "b3",\n        bookTitle: "Html",\n        chapterId: "c3",\n        chapterTitle: "Html",\n        createdBook: true,\n    })),\n    importPdf: vi.fn(async () => ({\n        bookId: "b4",\n        bookTitle: "Pdf",\n        chapterIds: ["c4"],\n        chapterTitles: ["Pdf"],\n        createdBook: true,\n        pageCount: 2,\n        removedRepeatedLines: 2,\n        mode: "reflow",\n    })),\n',
+          )
+          replace(
+              "frontend/src/import/importRouter.test.ts",
+              'vi.mock("./chapterImporters", () => ({\n    importMarkdownAsChapter,\n    importTextAsChapter,\n    importHtmlAsChapter,\n}));\n',
+              'vi.mock("./chapterImporters", () => ({\n    importMarkdownAsChapter,\n    importTextAsChapter,\n    importHtmlAsChapter,\n}));\nvi.mock("./pdfImport", () => ({ importPdf }));\n',
+          )
+          replace(
+              "frontend/src/import/importRouter.test.ts",
+              '    it("routes json-backup to importFullBackup", async () => {\n',
+              '    it("routes PDF through the local reconstruction importer", async () => {\n        const out = await importFile(file("book.pdf"), "pdf", { pdfMode: "plain" });\n        expect(out.kind).toBe("pdf");\n        expect(importPdf).toHaveBeenCalledWith(\n            expect.any(File),\n            { kind: "new-book" },\n            "plain",\n        );\n    });\n\n    it("routes json-backup to importFullBackup", async () => {\n',
+          )
+
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              'const CHAPTER_FORMATS: readonly ImportFormat[] = ["markdown", "text", "html"];',
+              'const CHAPTER_FORMATS: readonly ImportFormat[] = ["markdown", "text", "html", "pdf"];',
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '    const [target, setTarget] = useState<"new-book" | "existing-book">("new-book");\n',
+              '    const [target, setTarget] = useState<"new-book" | "existing-book">("new-book");\n    const [pdfMode, setPdfMode] = useState<"reflow" | "plain">("reflow");\n',
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '        setTarget("new-book");\n        setBooks([]);',
+              '        setTarget("new-book");\n        setPdfMode("reflow");\n        setBooks([]);',
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '        if (result.kind === "backup" || result.kind === "bgb-backup") {\n',
+              '        if (result.kind === "pdf") {\n            return t(\n                "ui.offline_import.success_pdf",\n                "PDF importiert: {chapters} Kapitel aus {pages} Seiten",\n            )\n                .replace("{chapters}", String(result.result.chapterIds.length))\n                .replace("{pages}", String(result.result.pageCount));\n        }\n        if (result.kind === "backup" || result.kind === "bgb-backup") {\n',
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '            const result = await importFile(file, format, {\n                target:\n',
+              '            const result = await importFile(file, format, {\n                pdfMode,\n                target:\n',
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '                            "Markdown, Text, HTML, JSON-Backup, Medium-Export (.zip), Backup (.bgb).",\n',
+              '                            "Markdown, Text, HTML, PDF, JSON-Backup, Medium-Export (.zip), Backup (.bgb).",\n',
+          )
+          marker = '''                        {format === "bgb" && (\n'''
+          pdf_controls = '''                        {format === "pdf" && (\n                            <fieldset className="m-0 flex flex-col gap-2 rounded-md border border-[var(--border)] p-3">\n                                <legend className="px-1 text-sm font-medium">\n                                    {t("ui.offline_import.pdf_mode", "PDF-Aufbereitung")}\n                                </legend>\n                                <label className="flex items-start gap-2 text-sm">\n                                    <input\n                                        type="radio"\n                                        name="offline-import-pdf-mode"\n                                        checked={pdfMode === "reflow"}\n                                        onChange={() => setPdfMode("reflow")}\n                                    />\n                                    <span>\n                                        <strong>{t("ui.offline_import.pdf_reflow", "Für EPUB anpassen")}</strong>\n                                        <span className="block text-xs text-[var(--text-muted)]">\n                                            {t("ui.offline_import.pdf_reflow_hint", "Erkennt Überschriften und Absätze und entfernt wiederkehrende Kopf- und Fußzeilen.")}\n                                        </span>\n                                    </span>\n                                </label>\n                                <label className="flex items-start gap-2 text-sm">\n                                    <input\n                                        type="radio"\n                                        name="offline-import-pdf-mode"\n                                        checked={pdfMode === "plain"}\n                                        onChange={() => setPdfMode("plain")}\n                                    />\n                                    <span>\n                                        <strong>{t("ui.offline_import.pdf_plain", "Nur Text extrahieren")}</strong>\n                                        <span className="block text-xs text-[var(--text-muted)]">\n                                            {t("ui.offline_import.pdf_plain_hint", "Behält die Lesereihenfolge bei, ohne Überschriften aus dem Layout abzuleiten.")}\n                                        </span>\n                                    </span>\n                                </label>\n                                <p className="m-0 text-xs text-[var(--text-muted)]">\n                                    {t("ui.offline_import.pdf_ocr_hint", "Gescannte PDFs ohne Textebene benötigen OCR und werden nicht leer importiert.")}\n                                </p>\n                            </fieldset>\n                        )}\n\n'''
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              marker,
+              pdf_controls + marker,
+          )
+          replace(
+              "frontend/src/components/import/FileImportTab.tsx",
+              '                accept=".md,.markdown,.txt,.html,.htm,.json,.zip,.bgb"\n',
+              '                accept=".md,.markdown,.txt,.html,.htm,.pdf,application/pdf,.json,.zip,.bgb"\n',
+          )
+          PY
+
+      - name: Add pinned PDF.js dependency and refresh lockfile
+        working-directory: frontend
+        run: npm install --package-lock-only --ignore-scripts --save-exact pdfjs-dist@6.3.289
+
+      - name: Clean install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Format touched files
+        working-directory: frontend
+        run: |
+          npx prettier --write \
+            package.json \
+            src/import/pdfImport.ts \
+            src/import/pdfImport.test.ts \
+            src/import/detectFormat.ts \
+            src/import/detectFormat.test.ts \
+            src/import/importRouter.ts \
+            src/import/importRouter.test.ts \
+            src/components/import/FileImportTab.tsx
+
+      - name: Lint touched code
+        working-directory: frontend
+        run: |
+          npx eslint \
+            src/import/pdfImport.ts \
+            src/import/pdfImport.test.ts \
+            src/import/detectFormat.ts \
+            src/import/detectFormat.test.ts \
+            src/import/importRouter.ts \
+            src/import/importRouter.test.ts \
+            src/components/import/FileImportTab.tsx
+
+      - name: TypeScript type check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Focused import tests
+        working-directory: frontend
+        run: |
+          npx vitest run \
+            src/import/pdfImport.test.ts \
+            src/import/detectFormat.test.ts \
+            src/import/importRouter.test.ts
+
+      - name: Production build
+        working-directory: frontend
+        run: npx vite build
+
+      - name: Commit validated generated state to bootstrap branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/package.json \
+            frontend/package-lock.json \
+            frontend/src/import/pdfImport.ts \
+            frontend/src/import/pdfImport.test.ts \
+            frontend/src/import/detectFormat.ts \
+            frontend/src/import/detectFormat.test.ts \
+            frontend/src/import/importRouter.ts \
+            frontend/src/import/importRouter.test.ts \
+            frontend/src/components/import/FileImportTab.tsx
+          git commit -m "feat(import): validate local PDF reconstruction [skip ci]"
+          git push origin HEAD:pdf-import-bootstrap
