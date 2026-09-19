@@ -59,7 +59,7 @@ export type ImportFileResult =
 export interface ImportFileOptions {
     /** Destination for single-file (md/txt/html) imports. Defaults to a new book. */
     target?: ChapterImportTarget;
-    /** PDF reconstruction strategy: semantic EPUB reflow or plain reading order. */
+    /** PDF strategy: simplified page structure (default) or plain reading order. */
     pdfMode?: PdfImportMode;
     /** Injectable clock for deterministic Medium preview ids in tests. */
     now?: number;
@@ -120,7 +120,7 @@ export async function importFile(
             return {
                 kind: "pdf",
                 format,
-                result: await importPdf(file, target, options.pdfMode ?? "reflow"),
+                result: await importPdf(file, target, options.pdfMode ?? "simplify"),
             };
         case "json-backup":
             return {

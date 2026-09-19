@@ -56,7 +56,7 @@ export default function FileImportTab({
     const [detecting, setDetecting] = useState(false);
     const [importing, setImporting] = useState(false);
     const [target, setTarget] = useState<"new-book" | "existing-book">("new-book");
-    const [pdfMode, setPdfMode] = useState<"reflow" | "plain">("reflow");
+    const [pdfMode, setPdfMode] = useState<"simplify" | "plain">("simplify");
     const [books, setBooks] = useState<Book[]>([]);
     const [bookId, setBookId] = useState("");
 
@@ -66,7 +66,7 @@ export default function FileImportTab({
         setDetecting(false);
         setImporting(false);
         setTarget("new-book");
-        setPdfMode("reflow");
+        setPdfMode("simplify");
         setBooks([]);
         setBookId("");
     };
@@ -301,17 +301,17 @@ export default function FileImportTab({
                                     <input
                                         type="radio"
                                         name="offline-import-pdf-mode"
-                                        checked={pdfMode === "reflow"}
-                                        onChange={() => setPdfMode("reflow")}
+                                        checked={pdfMode === "simplify"}
+                                        onChange={() => setPdfMode("simplify")}
                                     />
                                     <span>
                                         <strong>
-                                            {t("ui.offline_import.pdf_reflow", "Für EPUB anpassen")}
+                                            {t("ui.offline_import.pdf_reflow", "Design entfernen & Struktur behalten")}
                                         </strong>
                                         <span className="block text-xs text-[var(--text-muted)]">
                                             {t(
                                                 "ui.offline_import.pdf_reflow_hint",
-                                                "Erkennt Überschriften und Absätze und entfernt wiederkehrende Kopf- und Fußzeilen.",
+                                                "Entfernt Farben und Bilder, erkennt echte Kapitel und behält kurze PDF-Seiten als einzelne Textblöcke mit • • • dazwischen.",
                                             )}
                                         </span>
                                     </span>

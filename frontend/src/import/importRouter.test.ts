@@ -42,7 +42,8 @@ const {
         createdBook: true,
         pageCount: 2,
         removedRepeatedLines: 2,
-        mode: "reflow",
+        shortPageCount: 1,
+        mode: "simplify",
     })),
     importFullBackup: vi.fn(async () => ({
         imported: { books: 2, articles: 1 },
@@ -101,9 +102,9 @@ describe("importFile routing", () => {
     });
 
     it("routes PDF through the local reconstruction importer", async () => {
-        const out = await importFile(file("book.pdf"), "pdf", { pdfMode: "plain" });
+        const out = await importFile(file("book.pdf"), "pdf", { pdfMode: "simplify" });
         expect(out.kind).toBe("pdf");
-        expect(importPdf).toHaveBeenCalledWith(expect.any(File), { kind: "new-book" }, "plain");
+        expect(importPdf).toHaveBeenCalledWith(expect.any(File), { kind: "new-book" }, "simplify");
     });
 
     it("routes json-backup to importFullBackup", async () => {
