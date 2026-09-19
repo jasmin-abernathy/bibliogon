@@ -24,10 +24,10 @@ editor:
   draft_max_age_days: 30
   ai_context_chars: 2000
 app:
-  default_language: de
+  default_language: auto
   delete_permanently: false
-  description: Open-source book authoring platform
-  name: Bibliogon
+  description: Open-source local-first ebook workshop
+  name: Atelier EPUB
   supported_languages:
   - de
   - en
@@ -76,9 +76,9 @@ plugins:
   entry_point_group: bibliogon.plugins
 ui:
   logo: assets/logo.svg
-  subtitle: ''
-  theme: warm-literary
-  title: Bibliogon
+  subtitle: 'A local-first ebook workshop by Le Potager du Web'
+  theme: potager
+  title: Atelier EPUB
   defaults:
     # Pre-selected type when creating a new book / text. The Dashboard
     # "Neues Buch" / Article-list "Neuer Artikel" main buttons and the
@@ -89,6 +89,7 @@ ui:
     # content-types.yaml (the 8 article types).
     book_type: prose
     content_type: blogpost
+    book_language: en
   picture_book:
     # Workspace default for the picture-book / comic-book PDF export
     # controls (PdfExportControls). Authors can still override per
@@ -128,12 +129,9 @@ updates:
   last_check_at: null
   dismissed_version: null
 donations:
-  # Project-level config: edit via this YAML, not via the Settings UI.
-  # Flip `enabled: false` to hide all three donation visibility levels
-  # (S-01 Settings section, S-02 onboarding dialog, S-03 90-day banner).
-  # Set `landing_page_url` to a single URL to route every button there
-  # instead of showing the per-channel list; leave null for the list.
-  enabled: true
+  # Fork default: upstream donation prompts are hidden. Re-enable this
+  # section only after configuring channels that belong to this fork.
+  enabled: false
   landing_page_url: null
   channels:
     - name: Liberapay

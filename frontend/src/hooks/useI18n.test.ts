@@ -2,7 +2,7 @@ import {describe, it, expect, vi, beforeEach} from "vitest";
 import React from "react";
 import {render, screen, act} from "@testing-library/react";
 
-import {translate} from "./useI18n";
+import {detectBrowserLanguage, translate} from "./useI18n";
 
 interface Deferred {
     promise: Promise<Record<string, unknown>>;
@@ -23,7 +23,7 @@ function deferredCatalog(langKey: string): Promise<Record<string, unknown>> {
 vi.mock("../storage", () => ({
     getStorage: () => ({
         settings: {
-            getApp: async () => ({app: {default_language: "en"}}),
+            getApp: async () => ({app: {default_language: "fr"}}),
         },
         i18n: {
             get: (langKey: string) => deferredCatalog(langKey),
@@ -38,6 +38,19 @@ function createT(strings: Record<string, unknown>) {
     return (key: string, fallback?: string): string =>
         translate(strings, key, fallback);
 }
+
+describe("browser language detection", () => {
+    it("uses French for any French browser locale", () => {
+        expect(detectBrowserLanguage(["fr-FR"])).toBe("fr");
+        expect(detectBrowserLanguage(["en-US", "fr-CA"])).toBe("fr");
+    });
+
+    it("defaults to English for every non-French browser locale", () => {
+        expect(detectBrowserLanguage(["en-US"])).toBe("en");
+        expect(detectBrowserLanguage(["de-DE", "es-ES"])).toBe("en");
+        expect(detectBrowserLanguage([])).toBe("en");
+    });
+});
 
 describe("i18n t() function", () => {
     const strings = {
@@ -94,14 +107,22 @@ describe("I18nProvider catalog-load race (#713)", () => {
         for (const langKey of Object.keys(catalogRequests)) {
             delete catalogRequests[langKey];
         }
+        Object.defineProperty(window.navigator, "languages", {
+            configurable: true,
+            value: ["en-US"],
+        });
+        Object.defineProperty(window.navigator, "language", {
+            configurable: true,
+            value: "en-US",
+        });
         vi.resetModules();
     });
 
     /**
      * Regression pin for the TC-052 nightly flake: on boot the provider
-     * fetches the "de" bootstrap catalog, then the saved language ("en")
-     * arrives from settings and a second fetch fires. When the OLDER "de"
-     * response resolves AFTER the "en" one, it must be discarded - not
+     * fetches the "en" browser-bootstrap catalog, then the saved language ("fr")
+     * arrives from settings and a second fetch fires. When the OLDER "en"
+     * response resolves AFTER the "fr" one, it must be discarded - not
      * applied last-write-wins, which left the whole UI German until the
      * next full remount.
      */
@@ -120,28 +141,27 @@ describe("I18nProvider catalog-load race (#713)", () => {
 
         render(React.createElement(I18nProvider, null, React.createElement(Probe, null)));
 
-        // Boot: settings resolve "en" -> lang flips -> the "en" fetch fires.
+        // Boot: browser locale is English, saved app preference is French.
         await act(async () => {});
-        expect(screen.getByTestId("probe-lang").textContent).toBe("en");
-        expect(catalogRequests["de"]?.length ?? 0).toBeGreaterThan(0);
+        expect(screen.getByTestId("probe-lang").textContent).toBe("fr");
         expect(catalogRequests["en"]?.length ?? 0).toBeGreaterThan(0);
+        expect(catalogRequests["fr"]?.length ?? 0).toBeGreaterThan(0);
 
-        // The saved-language catalog resolves FIRST ...
+        // The saved-language catalog resolves first ...
+        await act(async () => {
+            for (const request of catalogRequests["fr"]) {
+                request.resolve({probe: {label: "FR"}});
+            }
+        });
+        expect(screen.getByTestId("probe-label").textContent).toBe("FR");
+
+        // ... and the stale English bootstrap response straggles in after.
         await act(async () => {
             for (const request of catalogRequests["en"]) {
                 request.resolve({probe: {label: "EN"}});
             }
         });
-        expect(screen.getByTestId("probe-label").textContent).toBe("EN");
 
-        // ... and the stale "de" bootstrap response straggles in AFTER.
-        await act(async () => {
-            for (const request of catalogRequests["de"]) {
-                request.resolve({probe: {label: "DE"}});
-            }
-        });
-
-        // The straggler must be ignored: the UI stays in the saved language.
-        expect(screen.getByTestId("probe-label").textContent).toBe("EN");
+        expect(screen.getByTestId("probe-label").textContent).toBe("FR");
     });
 });

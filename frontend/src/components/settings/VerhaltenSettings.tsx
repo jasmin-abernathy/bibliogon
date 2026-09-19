@@ -23,7 +23,7 @@ export function VerhaltenSettings({config, onSave}: {
     onSave: (data: Record<string, unknown>) => void;
     saving: boolean;
 }) {
-    const {t} = useI18n();
+    const {t, lang: uiLang} = useI18n();
     const bookTypes = useBookTypes();
     const contentTypes = useContentTypes();
     const app = (config.app || {}) as Record<string, unknown>;
@@ -32,7 +32,7 @@ export function VerhaltenSettings({config, onSave}: {
     const uiDefaults = (ui.defaults || {}) as Record<string, unknown>;
     const updates = (config.updates || {}) as Record<string, unknown>;
 
-    const [lang, setLang] = useState((app.default_language as string) || "de");
+    const [lang, setLang] = useState((app.default_language as string) || "auto");
     const [trashEnabled, setTrashEnabled] = useState(Boolean(app.trash_auto_delete_enabled));
     const [trashDays, setTrashDays] = useState(String(Number(app.trash_auto_delete_days ?? 30)));
     const [deletePermanently, setDeletePermanently] = useState(Boolean(app.delete_permanently));
@@ -49,7 +49,7 @@ export function VerhaltenSettings({config, onSave}: {
         (uiDefaults.content_type as string) || "blogpost",
     );
     const [defaultBookLanguage, setDefaultBookLanguage] = useState(
-        (uiDefaults.book_language as string) || "de",
+        (uiDefaults.book_language as string) || "en",
     );
     const [customLanguages, setCustomLanguages] = useState<string[]>(
         Array.isArray(ui.custom_languages)
@@ -87,7 +87,7 @@ export function VerhaltenSettings({config, onSave}: {
 
     useEffect(() => {
         if (userEdited.current) return; // never clobber an in-progress edit
-        setLang((app.default_language as string) || "de");
+        setLang((app.default_language as string) || "auto");
         setTrashEnabled(Boolean(app.trash_auto_delete_enabled));
         setTrashDays(String(Number(app.trash_auto_delete_days ?? 30)));
         setDeletePermanently(Boolean(app.delete_permanently));
@@ -102,7 +102,7 @@ export function VerhaltenSettings({config, onSave}: {
         const d = (uiBranch.defaults || {}) as Record<string, unknown>;
         setDefaultBookType((d.book_type as string) || "prose");
         setDefaultContentType((d.content_type as string) || "blogpost");
-        setDefaultBookLanguage((d.book_language as string) || "de");
+        setDefaultBookLanguage((d.book_language as string) || "en");
         setCustomLanguages(
             Array.isArray(uiBranch.custom_languages)
                 ? (uiBranch.custom_languages as string[]).filter(Boolean)
@@ -183,6 +183,13 @@ export function VerhaltenSettings({config, onSave}: {
                         onValueChange={onEdit(setLang)}
                         testId="settings-language"
                         options={[
+                            {
+                                value: "auto",
+                                label:
+                                    uiLang === "fr"
+                                        ? "Automatique (anglais / français)"
+                                        : "Automatic (English / French)",
+                            },
                             {value: "de", label: t("ui.languages.de", "Deutsch")},
                             {value: "en", label: t("ui.languages.en", "Englisch")},
                             {value: "es", label: t("ui.languages.es", "Spanisch")},

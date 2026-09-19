@@ -24,7 +24,7 @@ beforeEach(() => {
 describe("setDocumentMeta", () => {
     it("sets title (suffixed) + description + og/twitter from the given fields", () => {
         setDocumentMeta({ title: "Mein Buch", description: "Der Klappentext.", type: "book" });
-        expect(document.title).toBe("Mein Buch – Bibliogon");
+        expect(document.title).toBe("Mein Buch – Atelier EPUB");
         expect(metaContent("name", "description")).toBe("Der Klappentext.");
         expect(metaContent("property", "og:title")).toBe("Mein Buch");
         expect(metaContent("property", "og:description")).toBe("Der Klappentext.");
@@ -50,7 +50,7 @@ describe("setDocumentTitle", () => {
     it("sets only the title + og:title, leaving description untouched", () => {
         setDocumentMeta({ title: "X", description: "keep-me" });
         setDocumentTitle("Einstellungen");
-        expect(document.title).toBe("Einstellungen – Bibliogon");
+        expect(document.title).toBe("Einstellungen – Atelier EPUB");
         expect(metaContent("property", "og:title")).toBe("Einstellungen");
         expect(metaContent("name", "description")).toBe("keep-me");
     });

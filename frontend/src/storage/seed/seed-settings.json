@@ -19,10 +19,10 @@
     "ai_context_chars": 2000
   },
   "app": {
-    "default_language": "de",
+    "default_language": "auto",
     "delete_permanently": false,
-    "description": "Open-source book authoring platform",
-    "name": "Bibliogon",
+    "description": "Open-source local-first ebook workshop",
+    "name": "Atelier EPUB",
     "supported_languages": [
       "de",
       "en",
@@ -66,20 +66,25 @@
   },
   "ui": {
     "logo": "assets/logo.svg",
-    "subtitle": "Bücher schreiben und exportieren",
-    "theme": "cool-modern",
-    "title": "Bibliogon",
+    "subtitle": "A local-first ebook workshop by Le Potager du Web",
+    "theme": "potager",
+    "title": "Atelier EPUB",
     "dashboard": {
       "books_view": "grid",
       "articles_view": "list",
       "books_page_size": 25,
       "articles_page_size": 25
+    },
+    "defaults": {
+      "book_type": "prose",
+      "content_type": "blogpost",
+      "book_language": "en"
     }
   },
   "topics": [],
   "features": null,
   "donations": {
-    "enabled": true,
+    "enabled": false,
     "landing_page_url": null,
     "channels": [
       {

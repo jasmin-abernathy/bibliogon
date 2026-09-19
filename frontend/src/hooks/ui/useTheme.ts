@@ -15,7 +15,7 @@ function getInitialAppTheme(): string {
     // Guard against a stale localStorage value left over from a removed
     // or renamed palette. Unknown values fall back to the default so
     // the CSS always matches a real rule block.
-    const stored = localStorage.getItem("bibliogon-app-theme");
+    const stored = localStorage.getItem("atelier-epub-app-theme");
     if (stored && isKnownPalette(stored)) return stored;
     return DEFAULT_PALETTE;
 }
@@ -31,7 +31,7 @@ export function useTheme() {
 
     useEffect(() => {
         document.documentElement.setAttribute("data-app-theme", appTheme);
-        localStorage.setItem("bibliogon-app-theme", appTheme);
+        localStorage.setItem("atelier-epub-app-theme", appTheme);
     }, [appTheme]);
 
     const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));

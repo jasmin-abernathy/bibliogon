@@ -34,7 +34,7 @@ describe("index.html SEO tags", () => {
         expect(m).not.toBeNull();
         const ld = JSON.parse(m![1]);
         expect(ld["@type"]).toBe("WebApplication");
-        expect(ld.name).toBe("Bibliogon");
+        expect(ld.name).toBe("Atelier EPUB");
         expect(ld.offers.price).toBe("0");
     });
 });
@@ -88,9 +88,9 @@ describe("PWA manifest (vite-plugin-pwa config)", () => {
     const cfg = read("../vite.config.ts");
 
     it("has a non-empty description + lang + the SEO categories", () => {
-        expect(cfg).toContain('lang: "de"');
+        expect(cfg).toContain('lang: "en"');
         expect(cfg).toContain('categories: ["productivity", "books", "writing"]');
         // description present and not the empty/old placeholder
-        expect(cfg).toMatch(/description:\s*\n?\s*"Open-Source-Plattform fuer Autoren/);
+        expect(cfg).toMatch(/description:\s*\n?\s*"Open-source local-first workspace/);
     });
 });

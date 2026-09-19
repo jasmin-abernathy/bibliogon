@@ -17,12 +17,12 @@
 /** Static defaults mirroring `frontend/index.html`. {@link resetDocumentMeta}
  *  restores these when a route stops overriding the meta. */
 export const DEFAULT_META = {
-    title: "Bibliogon",
+    title: "Atelier EPUB",
     description:
-        "Bibliogon - die Open-Source-Plattform fuer Autoren. Buecher, Artikel und Comics schreiben, organisieren und veroeffentlichen. Offline-faehig, lokal-first.",
-    ogTitle: "Bibliogon - Open-Source Autoren-Plattform",
+        "Atelier EPUB - an open-source, local-first workspace to create books and simplify PDFs into editable ebook structure.",
+    ogTitle: "Atelier EPUB - local-first ebook workshop",
     ogDescription:
-        "Buecher, Artikel und Comics schreiben, organisieren und veroeffentlichen. Offline-faehig, lokal-first.",
+        "Create books and simplify layout-heavy PDFs into editable ebook structure, locally in your browser.",
     ogImage: "https://astrapi69.github.io/bibliogon/og-image.png",
     ogType: "website",
 } as const;
@@ -57,7 +57,7 @@ function upsertMeta(attr: "name" | "property", key: string, content: string): vo
 export function setDocumentMeta(meta: DocumentMeta): void {
     if (typeof document === "undefined") return;
     const title = meta.title?.trim() || DEFAULT_META.title;
-    const fullTitle = title === DEFAULT_META.title ? title : `${title} – Bibliogon`;
+    const fullTitle = title === DEFAULT_META.title ? title : `${title} – Atelier EPUB`;
     const description = meta.description?.trim() || DEFAULT_META.ogDescription;
     const image = meta.image?.trim() || DEFAULT_META.ogImage;
     const type = meta.type?.trim() || DEFAULT_META.ogType;
@@ -76,12 +76,12 @@ export function setDocumentMeta(meta: DocumentMeta): void {
 /**
  * Lighter variant for static routes: set only the page title (and the
  * matching `og:title` / `twitter:title`), leaving the description/image at
- * the app defaults. Empty/blank restores the default "Bibliogon".
+ * the app defaults. Empty/blank restores the default "Atelier EPUB".
  */
 export function setDocumentTitle(title?: string): void {
     if (typeof document === "undefined") return;
     const t = title?.trim();
-    const display = t ? `${t} – Bibliogon` : DEFAULT_META.title;
+    const display = t ? `${t} – Atelier EPUB` : DEFAULT_META.title;
     const ogTitle = t || DEFAULT_META.ogTitle;
     document.title = display;
     upsertMeta("property", "og:title", ogTitle);

@@ -40,6 +40,7 @@ import {
     Search,
     FileText,
     LayoutGrid,
+    Sprout,
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ImportWizardModal } from "../components/import-wizard";
@@ -79,7 +80,7 @@ export default function Dashboard() {
     const dialog = useDialog();
     const bookTypesSnapshot = useBookTypes();
     const { openHelp } = useHelp();
-    const { t } = useI18n();
+    const { t, lang, setLang } = useI18n();
     // bgb-import is the registry gate for the backend backup/restore family.
     // The sibling .bgb backup-export has no dedicated id in the feature
     // contract; both are backend-only and co-disabled offline (policy #78:
@@ -276,11 +277,18 @@ export default function Dashboard() {
 
     const handleBackupExport = useBackupExport(offline);
 
+    const handleLanguageChange = (next: "en" | "fr") => {
+        setLang(next);
+        void getStorage()
+            .settings.updateApp({ app: { default_language: next } })
+            .catch(() => {});
+    };
+
     return (
         <DropZone
             className={styles.container}
             onDrop={handleFileDrop}
-            accept={[".bgb", ".md", ".markdown", ".txt", ".html", ".htm", ".json", ".zip"]}
+            accept={[".bgb", ".md", ".markdown", ".txt", ".html", ".htm", ".pdf", ".json", ".zip"]}
             overlayLabel={t("ui.offline_import.drop_hint", "Datei hier ablegen zum Importieren")}
         >
             {/* Header */}
@@ -292,12 +300,36 @@ export default function Dashboard() {
                         role="button"
                         title="Dashboard"
                     >
-                        <BookOpen size={28} strokeWidth={1.5} />
-                        <h1 className={`${styles.logoText} hidden sm:inline`}>
-                            Bibliogon
-                        </h1>
+                        <Sprout size={28} strokeWidth={1.6} />
+                        <div className={styles.brandCopy}>
+                            <h1 className={styles.logoText}>Atelier EPUB</h1>
+                            <span className={`${styles.logoTag} hidden sm:inline`}>
+                                Le Potager du Web
+                            </span>
+                        </div>
                     </div>
                     <div className={styles.headerActions}>
+                        <div
+                            className={styles.languageSwitch}
+                            aria-label={lang === "fr" ? "Langue" : "Language"}
+                        >
+                            <button
+                                type="button"
+                                className={lang === "en" ? styles.languageActive : ""}
+                                aria-pressed={lang === "en"}
+                                onClick={() => handleLanguageChange("en")}
+                            >
+                                EN
+                            </button>
+                            <button
+                                type="button"
+                                className={lang === "fr" ? styles.languageActive : ""}
+                                aria-pressed={lang === "fr"}
+                                onClick={() => handleLanguageChange("fr")}
+                            >
+                                FR
+                            </button>
+                        </div>
                         {/* Always visible. Split-button: the primary
                          *  click keeps the existing 'new prose book'
                          *  flow (testid 'new-book-btn' preserved for
@@ -375,7 +407,7 @@ export default function Dashboard() {
                         >
                             <NewFromTemplateButton
                                 kind="book"
-                                defaultLanguage="de"
+                                defaultLanguage={lang === "fr" ? "fr" : "en"}
                                 triggerClassName="btn btn-secondary btn-sm"
                                 triggerTestId="new-book-from-template-btn"
                                 onCreated={(created) => navigate(`/books/${created.id}`)}
@@ -604,11 +636,16 @@ export default function Dashboard() {
                 ) : books.length === 0 ? (
                     <EmptyState
                         testId="dashboard-empty-state"
-                        icon={<BookOpen size={56} strokeWidth={1} color="var(--text-muted)" />}
-                        title={t("ui.dashboard.welcome", "Willkommen bei Bibliogon")}
+                        icon={<Sprout size={56} strokeWidth={1.1} color="var(--accent)" />}
+                        title={t(
+                            "ui.dashboard.welcome",
+                            lang === "fr" ? "Votre ebook, sans le bazar." : "Your ebook, without the clutter.",
+                        )}
                         body={t(
                             "ui.dashboard.welcome_text",
-                            "Erstelle dein erstes Buch, importiere ein bestehendes Projekt, oder schaue dir die Erste-Schritte-Anleitung an.",
+                            lang === "fr"
+                                ? "Créez un livre ou importez un PDF : l’atelier garde la structure utile, enlève le design superflu et vous laisse reprendre la main."
+                                : "Create a book or import a PDF: the workshop keeps useful structure, removes unnecessary design, and leaves you in control.",
                         )}
                         actions={
                             <>
@@ -618,7 +655,7 @@ export default function Dashboard() {
                                     data-testid="dashboard-empty-create-book"
                                 >
                                     <Plus size={16} />{" "}
-                                    {t("ui.dashboard.create_book", "Buch erstellen")}
+                                    {t("ui.dashboard.create_book", lang === "fr" ? "Créer un livre" : "Create book")}
                                 </button>
                                 <button
                                     className="btn btn-secondary"
@@ -626,15 +663,7 @@ export default function Dashboard() {
                                     data-testid="dashboard-empty-import"
                                 >
                                     <FolderUp size={16} />{" "}
-                                    {t("ui.dashboard.import_project", "Projekt importieren")}
-                                </button>
-                                <button
-                                    className="btn btn-secondary"
-                                    onClick={() => navigate("/get-started")}
-                                    data-testid="dashboard-empty-get-started"
-                                >
-                                    <Rocket size={16} />{" "}
-                                    {t("ui.get_started.title", "Erste Schritte")}
+                                    {t("ui.dashboard.import_project", lang === "fr" ? "Importer un PDF ou un projet" : "Import PDF or project")}
                                 </button>
                             </>
                         }

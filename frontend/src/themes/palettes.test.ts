@@ -24,8 +24,12 @@ describe("palette registry", () => {
         expect(ids).toContain("notebook");
     });
 
-    it("has exactly six palettes (guards against accidental additions)", () => {
-        expect(PALETTES).toHaveLength(6);
+    it("contains the Potager fork palette", () => {
+        expect(PALETTES.map((p) => p.id)).toContain("potager");
+    });
+
+    it("has exactly seven palettes (guards against accidental additions)", () => {
+        expect(PALETTES).toHaveLength(7);
     });
 
     it("uses kebab-case IDs with no whitespace", () => {
@@ -40,8 +44,8 @@ describe("palette registry", () => {
         }
     });
 
-    it("defaults to warm-literary", () => {
-        expect(DEFAULT_PALETTE).toBe("warm-literary");
+    it("defaults to the Potager palette", () => {
+        expect(DEFAULT_PALETTE).toBe("potager");
         expect(isKnownPalette(DEFAULT_PALETTE)).toBe(true);
     });
 });

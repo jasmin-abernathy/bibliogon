@@ -51,25 +51,62 @@ export function translate(
 let cachedLang = "";
 let cachedStrings: I18nStrings = {};
 
+export function detectBrowserLanguage(
+    languages: readonly string[] =
+        typeof navigator !== "undefined"
+            ? navigator.languages?.length
+                ? navigator.languages
+                : [navigator.language]
+            : [],
+): "fr" | "en" {
+    return languages.some((candidate) => candidate.toLowerCase().startsWith("fr"))
+        ? "fr"
+        : "en";
+}
+
+function resolveLanguagePreference(preference: string | undefined): string {
+    if (!preference || preference === "auto") return detectBrowserLanguage();
+    return preference;
+}
+
 export function I18nProvider({children}: {children: ReactNode}) {
     const [strings, setStrings] = useState<I18nStrings>(cachedStrings);
-    const [lang, setLangState] = useState(cachedLang || "de");
+    const [lang, setLangState] = useState(cachedLang || detectBrowserLanguage());
 
     // Load language preference from app settings on mount
     useEffect(() => {
         if (cachedLang) return; // already loaded
         getStorage().settings.getApp().then((config) => {
-            const appLang = ((config.app as Record<string, unknown>)?.default_language as string) || "de";
-            setLangState(appLang);
+            const preference = (config.app as Record<string, unknown>)?.default_language as
+                | string
+                | undefined;
+
+            // One-time fork migration: early preview builds inherited Bibliogon's
+            // German default in IndexedDB. Move that untouched legacy default to
+            // browser-driven auto mode, but remember the migration so a later
+            // explicit German choice remains respected.
+            const migrationKey = "atelier-epub-language-migration-v1";
+            const shouldMigrateLegacyGerman =
+                preference === "de" &&
+                typeof localStorage !== "undefined" &&
+                localStorage.getItem(migrationKey) !== "done";
+            if (shouldMigrateLegacyGerman) {
+                localStorage.setItem(migrationKey, "done");
+                setLangState(detectBrowserLanguage());
+                void getStorage()
+                    .settings.updateApp({app: {default_language: "auto"}})
+                    .catch(() => {});
+                return;
+            }
+
+            setLangState(resolveLanguagePreference(preference));
         }).catch(() => {});
     }, []);
 
     // Fetch strings when language changes. The cancelled-closure guard
-    // discards STALE responses: on boot the "de" bootstrap fetch races the
-    // saved-language fetch (settings resolve after mount), and without the
-    // guard whichever response landed LAST won - a straggling "de" catalog
-    // arriving after the saved "en" one left the whole UI German until the
-    // next remount (the TC-052 nightly flake, #713).
+    // discards STALE responses: browser detection can start one catalog
+    // request before the saved preference resolves. Without the guard, a
+    // slower bootstrap response could overwrite the user's final locale.
     useEffect(() => {
         if (lang === cachedLang && Object.keys(cachedStrings).length > 0) {
             setStrings(cachedStrings);
@@ -93,8 +130,12 @@ export function I18nProvider({children}: {children: ReactNode}) {
     }, [lang]);
 
     const setLang = useCallback((newLang: string) => {
-        setLangState(newLang);
+        setLangState(resolveLanguagePreference(newLang));
     }, []);
+
+    useEffect(() => {
+        document.documentElement.lang = lang;
+    }, [lang]);
 
     const t = useCallback(
         (key: string, fallback?: string): string =>
@@ -117,7 +158,7 @@ export function useI18n() {
         // Fallback for components rendered outside provider (e.g. tests)
         return {
             t: (key: string, fallback?: string) => fallback || key,
-            lang: "de",
+            lang: detectBrowserLanguage(),
             setLang: () => {},
         };
     }

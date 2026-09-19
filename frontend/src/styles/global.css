@@ -229,6 +229,38 @@
     --metadata-tab-min-height: 600px;
 }
 
+/* --- Potager Theme (Light) --- */
+[data-app-theme="potager"] {
+    --bg-primary: #f7f8f4;
+    --bg-secondary: #eef3eb;
+    --bg-sidebar: #edf4ec;
+    --bg-card: #ffffff;
+    --bg-hover: #e8f1e7;
+    --bg-editor: #ffffff;
+
+    --surface-2: #f2f6ef;
+
+    --text-primary: #27322b;
+    --text-secondary: #526158;
+    --text-muted: #6f7c74;
+    --text-inverse: #f8fbf7;
+    --text-sidebar: #34473a;
+
+    --accent: #4f7a57;
+    --accent-hover: #3f6647;
+    --accent-light: #e3efe1;
+    --accent-subtle: #cfe3cc;
+
+    --border: #d9e5d6;
+    --border-strong: #bfd2bb;
+
+    --shadow-sm: 0 1px 2px rgba(39, 50, 43, 0.05);
+    --shadow-md: 0 6px 18px rgba(39, 50, 43, 0.08);
+    --shadow-lg: 0 14px 36px rgba(39, 50, 43, 0.11);
+
+    --font-display: "DM Sans", system-ui, sans-serif;
+}
+
 /* --- Cool Modern Theme (Light) --- */
 [data-app-theme="cool-modern"] {
     --bg-primary: #f8fafc;
@@ -341,6 +373,33 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Dark Mode (Potager) --- */
+[data-app-theme="potager"][data-theme="dark"] {
+    --bg-primary: #18211a;
+    --bg-secondary: #202c23;
+    --bg-sidebar: #1b271e;
+    --bg-card: #202a22;
+    --bg-hover: #29372c;
+    --bg-editor: #1b241d;
+
+    --surface-2: #263229;
+
+    --text-primary: #edf4ee;
+    --text-secondary: #bac7bd;
+    --text-muted: #93a197;
+    --text-inverse: #18211a;
+    --text-sidebar: #dce8de;
+
+    --accent: #8fbd95;
+    --accent-hover: #a6cdaa;
+    --accent-light: rgba(143, 189, 149, 0.15);
+    --accent-subtle: rgba(143, 189, 149, 0.25);
+
+    --border: #34473a;
+    --border-strong: #46604c;
+    --btn-primary-text: #172019;
 }
 
 /* --- Dark Mode (Cool Modern) --- */

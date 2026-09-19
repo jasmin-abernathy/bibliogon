@@ -134,14 +134,14 @@ export default defineConfig({
         "icon-maskable.svg",
       ],
       manifest: {
-        name: "Bibliogon - Open-Source Autoren-Plattform",
-        short_name: "Bibliogon",
+        name: "Atelier EPUB - Local-first ebook workshop",
+        short_name: "Atelier EPUB",
         description:
-          "Open-Source-Plattform fuer Autoren: Buecher, Artikel und Comics schreiben, organisieren und veroeffentlichen. Offline-faehig, lokal-first.",
-        lang: "de",
+          "Open-source local-first workspace to create books and simplify PDFs into editable ebook structure.",
+        lang: "en",
         categories: ["productivity", "books", "writing"],
-        theme_color: "#b45309",
-        background_color: "#faf8f5",
+        theme_color: "#4f7a57",
+        background_color: "#f7f8f4",
         display: "standalone",
         orientation: "any",
         // start_url / scope / icon srcs follow the deploy base so the

@@ -21,6 +21,7 @@ export interface Palette {
  * the localized source and take precedence.
  */
 export const PALETTES: readonly Palette[] = [
+    {id: "potager", label: "Potager"},
     {id: "warm-literary", label: "Warm Literary"},
     {id: "cool-modern", label: "Cool Modern"},
     {id: "nord", label: "Nord"},
@@ -29,7 +30,7 @@ export const PALETTES: readonly Palette[] = [
     {id: "notebook", label: "Notebook"},
 ];
 
-export const DEFAULT_PALETTE = "warm-literary";
+export const DEFAULT_PALETTE = "potager";
 
 export function isKnownPalette(id: string): boolean {
     return PALETTES.some((p) => p.id === id);

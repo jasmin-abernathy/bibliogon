@@ -49,7 +49,7 @@ export default function FileImportTab({
     onClose,
     initialFile,
 }: FileImportTabProps) {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
     const [format, setFormat] = useState<ImportFormat | null>(null);
@@ -128,7 +128,9 @@ export default function FileImportTab({
         if (result.kind === "pdf") {
             return t(
                 "ui.offline_import.success_pdf",
-                "PDF importiert: {chapters} Kapitel aus {pages} Seiten",
+                lang === "fr"
+                    ? "PDF importé : {chapters} chapitres depuis {pages} pages"
+                    : "PDF imported: {chapters} chapters from {pages} pages",
             )
                 .replace("{chapters}", String(result.result.chapterIds.length))
                 .replace("{pages}", String(result.result.pageCount));
@@ -173,6 +175,10 @@ export default function FileImportTab({
                             "ui.offline_import.unknown_hint",
                             "Dieses Format kann offline nicht importiert werden.",
                         )
+                      : err instanceof Error && err.name === "PdfNeedsOcrError"
+                      ? lang === "fr"
+                          ? "Ce PDF ne contient pas de couche texte exploitable et nécessite un OCR."
+                          : "This PDF has no usable text layer and needs OCR."
                       : err instanceof Error
                         ? err.message
                         : String(err);
@@ -237,7 +243,9 @@ export default function FileImportTab({
                                     )}{" "}
                                 </span>
                                 <span className="font-medium">
-                                    {t(formatLabelKey(format), format)}
+                                    {format === "pdf"
+                                        ? "PDF (.pdf)"
+                                        : t(formatLabelKey(format), format)}
                                 </span>
                             </div>
                         )}
@@ -295,7 +303,10 @@ export default function FileImportTab({
                         {format === "pdf" && (
                             <fieldset className="m-0 flex flex-col gap-2 rounded-md border border-[var(--border)] p-3">
                                 <legend className="px-1 text-sm font-medium">
-                                    {t("ui.offline_import.pdf_mode", "PDF-Aufbereitung")}
+                                    {t(
+                                        "ui.offline_import.pdf_mode",
+                                        lang === "fr" ? "Traitement du PDF" : "PDF processing",
+                                    )}
                                 </legend>
                                 <label className="flex items-start gap-2 text-sm">
                                     <input
@@ -306,12 +317,19 @@ export default function FileImportTab({
                                     />
                                     <span>
                                         <strong>
-                                            {t("ui.offline_import.pdf_reflow", "Design entfernen & Struktur behalten")}
+                                            {t(
+                                                "ui.offline_import.pdf_reflow",
+                                                lang === "fr"
+                                                    ? "Supprimer le design et garder la structure"
+                                                    : "Remove design and keep structure",
+                                            )}
                                         </strong>
                                         <span className="block text-xs text-[var(--text-muted)]">
                                             {t(
                                                 "ui.offline_import.pdf_reflow_hint",
-                                                "Entfernt Farben und Bilder, erkennt echte Kapitel und behält kurze PDF-Seiten als einzelne Textblöcke mit • • • dazwischen.",
+                                                lang === "fr"
+                                                    ? "Supprime couleurs et illustrations, reconnaît les vrais chapitres et conserve les pages courtes comme blocs séparés par • • •."
+                                                    : "Removes colors and illustrations, detects real chapters, and keeps short pages as blocks separated by • • •.",
                                             )}
                                         </span>
                                     </span>
@@ -327,13 +345,17 @@ export default function FileImportTab({
                                         <strong>
                                             {t(
                                                 "ui.offline_import.pdf_plain",
-                                                "Nur Text extrahieren",
+                                                lang === "fr"
+                                                    ? "Extraire uniquement le texte"
+                                                    : "Extract text only",
                                             )}
                                         </strong>
                                         <span className="block text-xs text-[var(--text-muted)]">
                                             {t(
                                                 "ui.offline_import.pdf_plain_hint",
-                                                "Behält die Lesereihenfolge bei, ohne Überschriften aus dem Layout abzuleiten.",
+                                                lang === "fr"
+                                                    ? "Conserve l’ordre de lecture sans déduire de titres depuis la mise en page."
+                                                    : "Keeps reading order without inferring headings from layout.",
                                             )}
                                         </span>
                                     </span>
@@ -341,7 +363,9 @@ export default function FileImportTab({
                                 <p className="m-0 text-xs text-[var(--text-muted)]">
                                     {t(
                                         "ui.offline_import.pdf_ocr_hint",
-                                        "Gescannte PDFs ohne Textebene benötigen OCR und werden nicht leer importiert.",
+                                        lang === "fr"
+                                            ? "Les PDF scannés sans couche texte nécessitent un OCR et ne sont jamais importés vides."
+                                            : "Scanned PDFs without a text layer need OCR and are never imported empty.",
                                     )}
                                 </p>
                             </fieldset>

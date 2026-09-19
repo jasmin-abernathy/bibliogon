@@ -1,7 +1,7 @@
 {
   "ui": {
     "migration": {
-      "title": "Welcome to Bibliogon",
+      "title": "Welcome to Atelier EPUB",
       "intro": "Have you already used the app online? Your books and articles can be carried over.",
       "step_open": "Open the online version.",
       "step_settings": "Go to Settings → Data → Full backup (.bgb).",
@@ -52,7 +52,7 @@
       "drop_hint": "Drop a file here to import",
       "title": "Import",
       "drop_zone": "Drop a file here or click to browse",
-      "accepted": "Markdown, text, HTML, JSON backup, Medium export (.zip), backup (.bgb).",
+      "accepted": "Markdown, text, HTML, PDF, JSON backup, Medium export (.zip), backup (.bgb).",
       "file_label": "File:",
       "detecting": "Detecting format …",
       "detected_label": "Detected format:",
@@ -296,10 +296,10 @@
       "restored": "Book restored.",
       "restore_failed": "Restore failed.",
       "delete_permanent": "Delete permanently",
-      "welcome": "Welcome to Bibliogon",
-      "welcome_text": "Create your first book, import an existing project, or check out the getting started guide.",
+      "welcome": "Your ebook, without the clutter.",
+      "welcome_text": "Create a book or import a PDF: the workshop keeps useful structure, removes unnecessary design, and leaves you in control.",
       "create_book": "Create book",
-      "import_project": "Import project",
+      "import_project": "Import PDF or project",
       "moved_to_trash": "Moved to trash",
       "deleted_permanently": "Book permanently deleted",
       "dark_mode": "Dark Mode",

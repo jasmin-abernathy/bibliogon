@@ -74,19 +74,19 @@ describe("useTheme", () => {
   })
 
   describe("appTheme (palette)", () => {
-    it("defaults to warm-literary when no stored value", () => {
+    it("defaults to the fork palette when no stored value", () => {
       const {result} = renderHook(() => useTheme())
       expect(result.current.appTheme).toBe(DEFAULT_PALETTE)
     })
 
     it("reads stored palette from localStorage", () => {
-      localStorage.setItem("bibliogon-app-theme", "nord")
+      localStorage.setItem("atelier-epub-app-theme", "nord")
       const {result} = renderHook(() => useTheme())
       expect(result.current.appTheme).toBe("nord")
     })
 
     it("falls back to default for unknown stored palette", () => {
-      localStorage.setItem("bibliogon-app-theme", "nonexistent-theme")
+      localStorage.setItem("atelier-epub-app-theme", "nonexistent-theme")
       const {result} = renderHook(() => useTheme())
       expect(result.current.appTheme).toBe(DEFAULT_PALETTE)
     })
@@ -100,7 +100,7 @@ describe("useTheme", () => {
     it("persists palette to localStorage", () => {
       const {result} = renderHook(() => useTheme())
       act(() => result.current.setAppTheme("nord"))
-      expect(localStorage.getItem("bibliogon-app-theme")).toBe("nord")
+      expect(localStorage.getItem("atelier-epub-app-theme")).toBe("nord")
     })
 
     it("sets data-app-theme attribute on document element", () => {

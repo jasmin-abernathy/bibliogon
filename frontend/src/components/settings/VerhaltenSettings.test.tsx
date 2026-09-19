@@ -128,7 +128,7 @@ describe("VerhaltenSettings — extracted Behavior tab", () => {
                     defaults: {
                         book_type: "prose",
                         content_type: "blogpost",
-                        book_language: "de",
+                        book_language: "en",
                     },
                 },
                 updates: {
@@ -262,7 +262,7 @@ describe("VerhaltenSettings — extracted Behavior tab", () => {
                         defaults: {
                             book_type: "comic_book",
                             content_type: "tutorial",
-                            book_language: "de",
+                            book_language: "en",
                         },
                     },
                 }),
