@@ -1,51 +1,33 @@
-name: Deploy app to GitHub Pages
+name: Publish fork preview branch
 
-# Deploys the Bibliogon frontend (the React/Vite SPA) to this repo's
-# GitHub Pages site at https://astrapi69.github.io/bibliogon/.
+# Builds Jasmin's fork as an offline/local-first preview and publishes the
+# compiled site to this repository's gh-pages branch.
 #
-# This repo's Pages site hosts the APP. The documentation is published
-# separately to the astrapi69/bibliogondocs repo (see deploy-docs.yml) —
-# a GitHub Pages project site is always served at <user>.github.io/<repo>/,
-# so app and docs need distinct repos to get distinct URLs.
-#
-# The app is built as a standalone OFFLINE PWA: there is no backend at
-# the GitHub Pages origin, so it runs purely on local IndexedDB storage
-# (VITE_STORAGE_MODE=dexie forces the offline storage backend). LAN sync
-# to a desktop is intentionally out of scope here (blocked by HTTPS->HTTP
-# mixed content); see MOBILE-LAN-SYNC-01 in the backlog.
+# First-time GitHub Pages setup: in Settings > Pages, choose gh-pages / (root).
+# After that one-time selection, every push to develop updates the preview
+# automatically at https://jasmin-abernathy.github.io/bibliogon/.
 
 on:
-  # Gitflow (#79): the live app site tracks `develop` so Aster can test the
-  # development build; `main` is kept too so a release merge still redeploys.
   push:
-    branches: [develop, main]
+    branches: [develop]
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Only one Pages deploy at a time; a newer push supersedes an in-flight one.
 concurrency:
-  group: pages
+  group: fork-preview-pages
   cancel-in-progress: true
 
-# Defensive opt-in: coerce any JavaScript-runtime action still declaring
-# Node 20 to Node 24 (safety net for future additions). Mirrors the other
-# workflows.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  build:
-    # This workflow belongs to the upstream production site. Forks may keep
-    # the workflow file, but must not fail just because their own Pages site
-    # is intentionally not configured.
-    if: github.repository == 'astrapi69/bibliogon'
+  deploy:
+    if: github.repository == 'jasmin-abernathy/bibliogon'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -56,32 +38,18 @@ jobs:
         working-directory: ./frontend
         env:
           VITE_BASE_URL: /bibliogon/
-          # No same-origin backend on GitHub Pages -> force the offline
-          # IndexedDB storage backend (mobile-sync storage layer). Inert
-          # until that layer is on main; harmless before then.
           VITE_STORAGE_MODE: dexie
-          # Build provenance baked into the bundle (Settings > About).
-          # IS_PREVIEW=false: production gets commit + build date in About
-          # but NOT the preview warning banner.
           VITE_BUILD_BRANCH: ${{ github.ref_name }}
           VITE_BUILD_COMMIT: ${{ github.sha }}
           VITE_BUILD_DATE: ${{ github.event.head_commit.timestamp }}
-          VITE_IS_PREVIEW: "false"
+          VITE_IS_PREVIEW: "true"
         run: |
           npm ci
           npm run build
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      - name: Publish compiled preview to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: frontend/dist
-
-  deploy:
-    if: github.repository == 'astrapi69/bibliogon'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/deploy-pages@v5
-        id: deployment
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./frontend/dist
+          force_orphan: true
