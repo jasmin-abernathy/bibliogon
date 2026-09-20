@@ -1,23 +1,13 @@
 /**
- * Editor display settings popover (EDITOR-DISPLAY-SETTINGS-01 C2).
+ * Editor display settings.
  *
- * Toolbar button + click-toggleable settings panel. Four controls
- * (width / font / size / line-height) bound to useEditorDisplaySettings.
- *
- * Built on a plain controlled-visibility + click-outside pattern
- * rather than @radix-ui/react-popover (which is not in package.json)
- * or DropdownMenu (which has happy-dom Vitest flake per the existing
- * "Radix DropdownMenu + happy-dom is brittle for Vitest" rule). The
- * panel is just a positioned div the consumer toggles via the
- * trigger button.
- *
- * Mount this in the editor toolbar — the parent useEditorDisplaySettings
- * hook lives at the app root so all editor surfaces inherit the
- * applied CSS variables.
+ * Can render as a standalone popover or embedded directly inside the grouped
+ * editor toolbar. The embedded mode avoids stacking a mystery icon on top of
+ * another toolbar layer.
  */
 
 import {useCallback, useEffect, useRef, useState} from "react";
-import {Settings2} from "lucide-react";
+import {Palette} from "lucide-react";
 import {
     type EditorDisplaySettings,
     type EditorFontFamily,
@@ -35,33 +25,30 @@ interface Props {
     onFontSizeChange: (s: EditorFontSize) => void;
     onLineHeightChange: (lh: EditorLineHeight) => void;
     onReset: () => void;
-    /** Optional override; default ``editor-display-settings``. */
+    embedded?: boolean;
     "data-testid"?: string;
 }
 
 const WIDTH_OPTIONS: ReadonlyArray<{value: EditorWidth; labelKey: string; labelFallback: string}> = [
-    {value: "narrow", labelKey: "ui.editor_display.width_narrow", labelFallback: "Schmal (680px)"},
-    {value: "medium", labelKey: "ui.editor_display.width_medium", labelFallback: "Mittel (780px)"},
-    {value: "wide", labelKey: "ui.editor_display.width_wide", labelFallback: "Breit (900px)"},
-    {value: "full", labelKey: "ui.editor_display.width_full", labelFallback: "Voll (keine Begrenzung)"},
+    {value: "narrow", labelKey: "ui.editor_display.width_narrow", labelFallback: "Narrow (680px)"},
+    {value: "medium", labelKey: "ui.editor_display.width_medium", labelFallback: "Medium (780px)"},
+    {value: "wide", labelKey: "ui.editor_display.width_wide", labelFallback: "Wide (900px)"},
+    {value: "full", labelKey: "ui.editor_display.width_full", labelFallback: "Full width"},
 ];
-
 const FONT_OPTIONS: ReadonlyArray<{value: EditorFontFamily; labelKey: string; labelFallback: string}> = [
     {value: "serif", labelKey: "ui.editor_display.font_serif", labelFallback: "Serif"},
-    {value: "sans", labelKey: "ui.editor_display.font_sans", labelFallback: "Sans-Serif"},
+    {value: "sans", labelKey: "ui.editor_display.font_sans", labelFallback: "Sans-serif"},
     {value: "mono", labelKey: "ui.editor_display.font_mono", labelFallback: "Monospace"},
 ];
-
 const SIZE_OPTIONS: ReadonlyArray<{value: EditorFontSize; labelKey: string; labelFallback: string}> = [
-    {value: "small", labelKey: "ui.editor_display.size_small", labelFallback: "Klein"},
-    {value: "medium", labelKey: "ui.editor_display.size_medium", labelFallback: "Mittel"},
-    {value: "large", labelKey: "ui.editor_display.size_large", labelFallback: "Groß"},
+    {value: "small", labelKey: "ui.editor_display.size_small", labelFallback: "Small"},
+    {value: "medium", labelKey: "ui.editor_display.size_medium", labelFallback: "Medium"},
+    {value: "large", labelKey: "ui.editor_display.size_large", labelFallback: "Large"},
 ];
-
 const LINE_HEIGHT_OPTIONS: ReadonlyArray<{value: EditorLineHeight; labelKey: string; labelFallback: string}> = [
-    {value: "compact", labelKey: "ui.editor_display.line_compact", labelFallback: "Kompakt"},
+    {value: "compact", labelKey: "ui.editor_display.line_compact", labelFallback: "Compact"},
     {value: "normal", labelKey: "ui.editor_display.line_normal", labelFallback: "Normal"},
-    {value: "relaxed", labelKey: "ui.editor_display.line_relaxed", labelFallback: "Entspannt"},
+    {value: "relaxed", labelKey: "ui.editor_display.line_relaxed", labelFallback: "Relaxed"},
 ];
 
 export default function EditorDisplaySettingsPopover({
@@ -71,138 +58,90 @@ export default function EditorDisplaySettingsPopover({
     onFontSizeChange,
     onLineHeightChange,
     onReset,
+    embedded = false,
     "data-testid": testId,
 }: Props) {
-    const {t} = useI18n();
+    const {t, lang} = useI18n();
     const [open, setOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const baseTestId = testId ?? "editor-display-settings";
+    const localLabel = (fr: string, en: string) => (lang === "fr" ? fr : en);
 
-    // Click-outside closes the panel. Bound via a single document-
-    // level listener so we don't intercept clicks inside the panel
-    // itself. Mouse-down (not click) so the close happens before
-    // any in-panel click handler fires — matches the
-    // DismissableLayer pattern Radix uses.
     useEffect(() => {
-        if (!open) return;
+        if (!open || embedded) return;
         const handler = (e: MouseEvent) => {
             if (!wrapperRef.current) return;
-            // RadixSelect renders its dropdown in a portal on
-            // document.body, i.e. OUTSIDE wrapperRef. A click on a
-            // select option must NOT close the popover — otherwise
-            // picking a width/font value closes the whole panel before
-            // the change applies (the option never takes effect).
             const target = e.target as HTMLElement | null;
             if (target?.closest(".radix-select-content")) return;
-            if (!wrapperRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
+            if (!wrapperRef.current.contains(e.target as Node)) setOpen(false);
         };
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
-    }, [open]);
+    }, [open, embedded]);
 
-    // Escape closes the panel for keyboard a11y.
     useEffect(() => {
-        if (!open) return;
+        if (!open || embedded) return;
         const handler = (e: KeyboardEvent) => {
             if (e.key === "Escape") setOpen(false);
         };
         document.addEventListener("keydown", handler);
         return () => document.removeEventListener("keydown", handler);
-    }, [open]);
+    }, [open, embedded]);
 
     const toggle = useCallback(() => setOpen((v) => !v), []);
 
+    const controls = (
+        <>
+            <PopoverSelect label={localLabel("Largeur", "Width")} value={settings.width} options={WIDTH_OPTIONS} onChange={onWidthChange} testId={`${baseTestId}-width`} t={t}/>
+            <PopoverSelect label={localLabel("Police", "Font")} value={settings.fontFamily} options={FONT_OPTIONS} onChange={onFontFamilyChange} testId={`${baseTestId}-font`} t={t}/>
+            <PopoverSelect label={localLabel("Taille", "Size")} value={settings.fontSize} options={SIZE_OPTIONS} onChange={onFontSizeChange} testId={`${baseTestId}-size`} t={t}/>
+            <PopoverSelect label={localLabel("Interligne", "Line height")} value={settings.lineHeight} options={LINE_HEIGHT_OPTIONS} onChange={onLineHeightChange} testId={`${baseTestId}-line`} t={t}/>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onReset} data-testid={`${baseTestId}-reset`}>
+                {localLabel("Réinitialiser", "Reset")}
+            </button>
+        </>
+    );
+
+    if (embedded) {
+        return (
+            <div
+                role="group"
+                aria-label={localLabel("Style de l’éditeur", "Editor style")}
+                data-testid={`${baseTestId}-embedded`}
+                style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))", gap:10}}
+            >
+                {controls}
+            </div>
+        );
+    }
+
     return (
-        <div
-            ref={wrapperRef}
-            style={{position: "relative", display: "inline-block"}}
-            data-testid={baseTestId}
-        >
+        <div ref={wrapperRef} style={{position:"relative",display:"inline-block"}} data-testid={baseTestId}>
             <button
                 type="button"
                 className="btn btn-icon"
                 onClick={toggle}
                 aria-expanded={open}
                 aria-haspopup="dialog"
-                aria-label={t(
-                    "ui.editor_display.toggle_label",
-                    "Editor-Anzeige-Einstellungen",
-                )}
-                title={t(
-                    "ui.editor_display.toggle_label",
-                    "Editor-Anzeige-Einstellungen",
-                )}
+                aria-label={localLabel("Style de l’éditeur", "Editor style")}
+                title={localLabel("Style de l’éditeur", "Editor style")}
                 data-testid={`${baseTestId}-toggle`}
             >
-                <Settings2 size={16} />
+                <Palette size={16}/>
             </button>
             {open && (
                 <div
                     role="dialog"
-                    aria-label={t(
-                        "ui.editor_display.panel_label",
-                        "Editor-Anzeige",
-                    )}
+                    aria-label={localLabel("Style de l’éditeur", "Editor style")}
                     data-testid={`${baseTestId}-panel`}
                     style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        right: 0,
-                        zIndex: 100,
-                        background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-sm)",
-                        boxShadow: "var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))",
-                        padding: 12,
-                        minWidth: 260,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
+                        position:"absolute",top:"calc(100% + 4px)",right:0,zIndex:100,
+                        background:"var(--bg-card)",border:"1px solid var(--border)",
+                        borderRadius:"var(--radius-sm)",boxShadow:"var(--shadow-md)",
+                        padding:12,minWidth:260,display:"flex",flexDirection:"column",gap:12,
                     }}
                 >
-                    <PopoverSelect
-                        label={t("ui.editor_display.width_label", "Breite")}
-                        value={settings.width}
-                        options={WIDTH_OPTIONS}
-                        onChange={onWidthChange}
-                        testId={`${baseTestId}-width`}
-                        t={t}
-                    />
-                    <PopoverSelect
-                        label={t("ui.editor_display.font_label", "Schriftart")}
-                        value={settings.fontFamily}
-                        options={FONT_OPTIONS}
-                        onChange={onFontFamilyChange}
-                        testId={`${baseTestId}-font`}
-                        t={t}
-                    />
-                    <PopoverSelect
-                        label={t("ui.editor_display.size_label", "Schriftgröße")}
-                        value={settings.fontSize}
-                        options={SIZE_OPTIONS}
-                        onChange={onFontSizeChange}
-                        testId={`${baseTestId}-size`}
-                        t={t}
-                    />
-                    <PopoverSelect
-                        label={t("ui.editor_display.line_label", "Zeilenhöhe")}
-                        value={settings.lineHeight}
-                        options={LINE_HEIGHT_OPTIONS}
-                        onChange={onLineHeightChange}
-                        testId={`${baseTestId}-line`}
-                        t={t}
-                    />
-                    <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={onReset}
-                        data-testid={`${baseTestId}-reset`}
-                        style={{marginTop: 4}}
-                    >
-                        {t("ui.editor_display.reset", "Standard wiederherstellen")}
-                    </button>
+                    {controls}
                 </div>
             )}
         </div>
@@ -218,35 +157,17 @@ interface SelectProps<T extends string> {
     t: (key: string, fallback: string) => string;
 }
 
-function PopoverSelect<T extends string>({
-    label,
-    value,
-    options,
-    onChange,
-    testId,
-    t,
-}: SelectProps<T>) {
+function PopoverSelect<T extends string>({label,value,options,onChange,testId,t}: SelectProps<T>) {
     return (
-        <label
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                fontSize: "0.875rem",
-            }}
-            data-testid={testId}
-        >
-            <span style={{color: "var(--text-muted)"}}>{label}</span>
+        <label style={{display:"flex",flexDirection:"column",gap:4,fontSize:".875rem"}} data-testid={testId}>
+            <span style={{color:"var(--text-muted)"}}>{label}</span>
             <RadixSelect
                 value={value}
                 onValueChange={(next) => onChange(next as T)}
                 testId={testId}
                 ariaLabel={label}
                 className="is-narrow"
-                options={options.map((opt) => ({
-                    value: opt.value,
-                    label: t(opt.labelKey, opt.labelFallback),
-                }))}
+                options={options.map((opt)=>({value:opt.value,label:t(opt.labelKey,opt.labelFallback)}))}
             />
         </label>
     );

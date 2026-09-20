@@ -30,6 +30,7 @@ const API = "http://localhost:8000/api";
  */
 async function openCopyMenu(page: Page): Promise<void> {
     await expect(page.locator(".ProseMirror")).toBeVisible();
+    await page.getByTestId("toolbar-category-tools").click();
     const markdownItem = page.getByTestId("toolbar-copy-markdown-item");
     await expect(async () => {
         // Click the chevron only when the menu is not already open. The
@@ -62,6 +63,7 @@ test.describe("Toolbar Copy split-button (F3)", () => {
             title: "Copy smoke article",
         });
         await page.goto(`/articles/${article.id}`);
+        await page.getByTestId("toolbar-category-tools").click();
 
         await expect(page.getByTestId("toolbar-copy-markdown")).toBeVisible();
         await expect(page.getByTestId("toolbar-copy-chevron")).toBeVisible();

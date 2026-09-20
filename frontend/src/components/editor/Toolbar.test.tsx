@@ -103,6 +103,10 @@ const requiredProps = {
     onToggleMarkdown: () => {},
 };
 
+function openCategory(testId: string) {
+    fireEvent.click(screen.getByTestId(testId));
+}
+
 beforeEach(() => {
     copyToClipboardMock.mockClear();
     copyToClipboardMock.mockImplementation(async () => true);
@@ -117,6 +121,7 @@ beforeEach(() => {
 describe("Toolbar Copy split-button (F3)", () => {
     it("renders the Copy button + chevron in WYSIWYG mode", () => {
         render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        openCategory("toolbar-category-tools");
         expect(screen.getByTestId("toolbar-copy-markdown")).toBeTruthy();
         expect(screen.getByTestId("toolbar-copy-chevron")).toBeTruthy();
         expect(screen.getByTestId("toolbar-copy-group")).toBeTruthy();
@@ -136,6 +141,7 @@ describe("Toolbar Copy split-button (F3)", () => {
 
     it("primary Copy button writes the Markdown-rendered body to the clipboard", async () => {
         render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        openCategory("toolbar-category-tools");
         fireEvent.click(screen.getByTestId("toolbar-copy-markdown"));
         await waitFor(() => {
             expect(copyToClipboardMock).toHaveBeenCalledTimes(1);
@@ -151,6 +157,7 @@ describe("Toolbar Copy split-button (F3)", () => {
                 documentTitle="My Article"
             />,
         );
+        openCategory("toolbar-category-tools");
         fireEvent.click(screen.getByTestId("toolbar-copy-markdown"));
         await waitFor(() => {
             expect(copyToClipboardMock).toHaveBeenCalled();
@@ -169,6 +176,7 @@ describe("Toolbar Copy split-button (F3)", () => {
                 documentSubtitle="A subtitle"
             />,
         );
+        openCategory("toolbar-category-tools");
         fireEvent.click(screen.getByTestId("toolbar-copy-markdown"));
         await waitFor(() => {
             expect(copyToClipboardMock).toHaveBeenCalled();
@@ -180,6 +188,7 @@ describe("Toolbar Copy split-button (F3)", () => {
 
     it("fires the success toast after a successful copy", async () => {
         render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        openCategory("toolbar-category-tools");
         fireEvent.click(screen.getByTestId("toolbar-copy-markdown"));
         await waitFor(() => {
             expect(notifySuccess).toHaveBeenCalledTimes(1);
@@ -192,6 +201,7 @@ describe("Toolbar Copy split-button (F3)", () => {
     it("fires the error toast when the clipboard API rejects", async () => {
         copyToClipboardMock.mockResolvedValueOnce(false);
         render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        openCategory("toolbar-category-tools");
         fireEvent.click(screen.getByTestId("toolbar-copy-markdown"));
         await waitFor(() => {
             expect(notifyError).toHaveBeenCalledTimes(1);
@@ -209,11 +219,13 @@ describe("Toolbar composition mode toggle (COMPOSITION-DISTRACTION-FREE-MODE-01)
                 onToggleComposition={() => {}}
             />,
         );
+        openCategory("toolbar-category-view");
         expect(screen.getByTestId("toolbar-composition")).toBeTruthy();
     });
 
     it("does not render the composition button without the handler", () => {
         render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        openCategory("toolbar-category-view");
         expect(screen.queryByTestId("toolbar-composition")).toBeNull();
     });
 
@@ -238,6 +250,7 @@ describe("Toolbar composition mode toggle (COMPOSITION-DISTRACTION-FREE-MODE-01)
                 onToggleComposition={onToggle}
             />,
         );
+        openCategory("toolbar-category-view");
         fireEvent.click(screen.getByTestId("toolbar-composition"));
         expect(onToggle).toHaveBeenCalledTimes(1);
     });
@@ -251,6 +264,7 @@ describe("Toolbar composition mode toggle (COMPOSITION-DISTRACTION-FREE-MODE-01)
                 onToggleComposition={() => {}}
             />,
         );
+        openCategory("toolbar-category-view");
         expect(
             screen.getByTestId("toolbar-composition").getAttribute("aria-pressed"),
         ).toBe("true");
@@ -301,6 +315,7 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
     it("clicking Formel prompts for LaTeX and inserts an inline math node", async () => {
         const { editor, calls } = makeMathEditor();
         render(<Toolbar editor={editor} {...requiredProps} />);
+        openCategory("toolbar-category-insert");
         fireEvent.click(screen.getByTestId("toolbar-formula"));
         await waitFor(() => expect(promptMock).toHaveBeenCalledTimes(1));
         await waitFor(() =>
@@ -314,6 +329,7 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
     it("clicking Block-Formel inserts a block math node", async () => {
         const { editor, calls } = makeMathEditor();
         render(<Toolbar editor={editor} {...requiredProps} />);
+        openCategory("toolbar-category-insert");
         fireEvent.click(screen.getByTestId("toolbar-formula-block"));
         await waitFor(() =>
             expect(calls.find((c) => c.cmd === "insertBlockMath")).toBeTruthy(),
@@ -327,6 +343,7 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
         promptMock.mockResolvedValueOnce(null);
         const { editor, calls } = makeMathEditor();
         render(<Toolbar editor={editor} {...requiredProps} />);
+        openCategory("toolbar-category-insert");
         fireEvent.click(screen.getByTestId("toolbar-formula"));
         await waitFor(() => expect(promptMock).toHaveBeenCalledTimes(1));
         expect(calls).toHaveLength(0);
@@ -336,6 +353,7 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
         promptMock.mockResolvedValueOnce("   ");
         const { editor, calls } = makeMathEditor();
         render(<Toolbar editor={editor} {...requiredProps} />);
+        openCategory("toolbar-category-insert");
         fireEvent.click(screen.getByTestId("toolbar-formula"));
         await waitFor(() => expect(promptMock).toHaveBeenCalledTimes(1));
         expect(calls).toHaveLength(0);
@@ -345,6 +363,7 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
         promptMock.mockResolvedValueOnce("a^2+b^2");
         const { editor, calls } = makeMathEditor({ active: true, latex: "x" });
         render(<Toolbar editor={editor} {...requiredProps} />);
+        openCategory("toolbar-category-insert");
         fireEvent.click(screen.getByTestId("toolbar-formula"));
         await waitFor(() =>
             expect(calls.find((c) => c.cmd === "updateInlineMath")).toBeTruthy(),
@@ -356,5 +375,40 @@ describe("Toolbar math formula buttons (TipTap v3)", () => {
         });
         // It must NOT insert a second node.
         expect(calls.find((c) => c.cmd === "insertInlineMath")).toBeUndefined();
+    });
+});
+
+describe("Toolbar grouped UX", () => {
+    it("shows one clear text block by default", () => {
+        render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        expect(screen.getByTestId("toolbar-text-panel")).toBeTruthy();
+        expect(screen.getByTestId("toolbar-category-text").getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("switches from text tools to insert tools", () => {
+        render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} />);
+        fireEvent.click(screen.getByTestId("toolbar-category-insert"));
+        expect(screen.getByTestId("toolbar-insert-panel")).toBeTruthy();
+        expect(screen.queryByTestId("toolbar-text-panel")).toBeNull();
+    });
+
+    it("uses a dedicated image action instead of an unlabeled icon", () => {
+        const onInsertImage = vi.fn();
+        render(<Toolbar editor={makeEditor(sampleDoc)} {...requiredProps} onInsertImage={onInsertImage} />);
+        fireEvent.click(screen.getByTestId("toolbar-category-insert"));
+        fireEvent.click(screen.getByTestId("toolbar-insert-image"));
+        expect(onInsertImage).toHaveBeenCalledTimes(1);
+    });
+
+    it("mounts visual style controls inside the Style panel", () => {
+        render(
+            <Toolbar
+                editor={makeEditor(sampleDoc)}
+                {...requiredProps}
+                stylePanel={<div data-testid="fake-style-controls">style controls</div>}
+            />,
+        );
+        fireEvent.click(screen.getByTestId("toolbar-category-style"));
+        expect(screen.getByTestId("fake-style-controls")).toBeTruthy();
     });
 });

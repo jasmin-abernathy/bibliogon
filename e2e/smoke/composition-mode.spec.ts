@@ -23,6 +23,11 @@ async function openEditor(page: import('@playwright/test').Page, bookId: string)
   await expect(page.locator('.tiptap-editor')).toBeVisible({timeout: 5000})
 }
 
+async function openViewTools(page: import('@playwright/test').Page) {
+  await page.getByTestId('toolbar-category-view').click()
+  await expect(page.getByTestId('toolbar-view-panel')).toBeVisible()
+}
+
 test.describe('Composition / distraction-free mode', () => {
   let bookId: string
 
@@ -37,15 +42,16 @@ test.describe('Composition / distraction-free mode', () => {
 
     // Baseline: chrome visible, not in composition.
     await expect(page.getByTestId('book-editor-sidebar')).toBeVisible()
-    await expect(page.getByTestId('toolbar-bold')).toBeVisible()
+    await expect(page.getByTestId('editor-tool-dock')).toBeVisible()
     await expect(page.getByTestId('composition-exit')).toHaveCount(0)
 
+    await openViewTools(page)
     await page.getByTestId('toolbar-composition').click()
 
     // The root carries the composition-mode class; chrome is hidden.
     await expect(page.locator('html')).toHaveClass(/composition-mode/)
     await expect(page.getByTestId('book-editor-sidebar')).not.toBeVisible()
-    await expect(page.getByTestId('toolbar-bold')).not.toBeVisible()
+    await expect(page.getByTestId('editor-tool-dock')).not.toBeVisible()
     await expect(page.getByTestId('composition-exit')).toBeVisible()
 
     // The writing surface itself stays visible + editable.
@@ -54,6 +60,7 @@ test.describe('Composition / distraction-free mode', () => {
 
   test('exit button restores the chrome', async ({page}) => {
     await openEditor(page, bookId)
+    await openViewTools(page)
     await page.getByTestId('toolbar-composition').click()
     await expect(page.locator('html')).toHaveClass(/composition-mode/)
 
@@ -61,19 +68,20 @@ test.describe('Composition / distraction-free mode', () => {
 
     await expect(page.locator('html')).not.toHaveClass(/composition-mode/)
     await expect(page.getByTestId('book-editor-sidebar')).toBeVisible()
-    await expect(page.getByTestId('toolbar-bold')).toBeVisible()
+    await expect(page.getByTestId('editor-tool-dock')).toBeVisible()
     await expect(page.getByTestId('composition-exit')).toHaveCount(0)
   })
 
   test('Escape exits composition mode', async ({page}) => {
     await openEditor(page, bookId)
+    await openViewTools(page)
     await page.getByTestId('toolbar-composition').click()
     await expect(page.locator('html')).toHaveClass(/composition-mode/)
 
     await page.keyboard.press('Escape')
 
     await expect(page.locator('html')).not.toHaveClass(/composition-mode/)
-    await expect(page.getByTestId('toolbar-bold')).toBeVisible()
+    await expect(page.getByTestId('editor-tool-dock')).toBeVisible()
   })
 
   test('Ctrl+Shift+D toggles composition mode', async ({page}) => {

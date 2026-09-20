@@ -114,6 +114,7 @@ async function openEditorForChapter(page: Page, bookId: string) {
   }
   // The toolbar AI button enables once the plugin-status poll returns
   // ai.available. With the route mock above it should enable quickly.
+  await page.getByTestId("toolbar-category-tools").click();
   const aiBtn = page.getByTestId("toolbar-ai");
   await expect(aiBtn).toBeEnabled({timeout: 5000}).catch(() => {});
   // Skip-guard: if AI is genuinely unavailable in this environment (no

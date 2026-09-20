@@ -240,6 +240,7 @@ test.describe("Feature Screenshots", () => {
         test("composition mode", async ({page}) => {
             const book = await seedProseBook("Schreiben am Meer");
             await page.goto(`/book/${book.id}`);
+            await page.getByTestId("toolbar-category-view").click().catch(() => {});
             await page.getByTestId("toolbar-composition").click().catch(() => {});
             await page.waitForTimeout(500);
             await page.screenshot({path: `${OUT}/book-editor/composition-mode.png`});

@@ -1,108 +1,217 @@
-/**
- * T-01 Phase B: Toolbar CSS-Module.
- *
- * Migrated from a 60-line ``const styles`` block. 8 keys, ~11 inline
- * applications (many with 2-3 conditional spreads). Editor toolbar
- * with format/heading/align/list/AI/spellcheck/markdown buttons.
- */
-
-.toolbar {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 8px 16px;
+.shell {
     border-bottom: 1px solid var(--border);
     background: var(--bg-card);
-    flex-wrap: wrap;
 }
 
-.button {
+.categoryBar {
     display: flex;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--bg-card);
+}
+
+.categoryBar::-webkit-scrollbar {
+    display: none;
+}
+
+.categoryButton {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
+    gap: 7px;
+    min-height: 40px;
+    padding: 7px 12px;
+    border: 1px solid transparent;
+    border-radius: 999px;
     background: transparent;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
     color: var(--text-secondary);
-    transition: all 150ms;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 650;
+    white-space: nowrap;
+    cursor: pointer;
 }
 
-.buttonActive {
+.categoryButton:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.categoryButtonActive {
+    border-color: var(--border-strong);
     background: var(--accent-light);
     color: var(--accent);
 }
 
+.panel {
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.panelLead {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.panelLead strong {
+    color: var(--text-primary);
+    font-size: .86rem;
+}
+
+.panelLead span {
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+
+.textGroups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.toolGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.groupLabel {
+    color: var(--text-muted);
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.toolGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.toolAction {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 6px 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: .74rem;
+    font-weight: 550;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.toolAction:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.toolActionActive {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.toolAction:disabled,
 .buttonDisabled {
-    opacity: 0.35;
+    opacity: .38;
     cursor: not-allowed;
 }
 
-.buttonLoading {
-    opacity: 0.5;
-    cursor: wait;
+.toolIcon {
+    display: inline-flex;
 }
 
-.separator {
-    width: 1px;
-    height: 20px;
-    background: var(--border);
-    margin: 0 4px;
+.toolLabel {
+    line-height: 1.1;
 }
 
-.spacer {
-    flex: 1;
+.stylePanelHost {
+    margin-bottom: 8px;
 }
 
-.modeToggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: var(--font-body);
-    transition: all 150ms;
-}
-
-.modeToggleActive {
-    background: var(--accent-light);
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-/* Copy split-button: a primary action button glued to a chevron
- * disclosure that exposes the plain-text alternative. The two
- * elements visually read as one control (no gap) but each gets its
- * own hover state. */
 .copyGroup {
-    display: flex;
-    align-items: center;
-    gap: 0;
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.copyGroup .toolAction {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
 }
 
 .copyChevron {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
+    width: 28px;
+    min-height: 34px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--bg-card);
     color: var(--text-secondary);
-    transition: all 150ms;
+    cursor: pointer;
 }
 
 .copyChevron:hover {
-    background: var(--accent-light);
-    color: var(--accent);
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+    .categoryBar {
+        gap: 4px;
+        padding: 7px 6px;
+    }
+
+    .categoryButton {
+        flex: 1 0 62px;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 62px;
+        min-height: 50px;
+        padding: 5px 4px;
+        border-radius: 12px;
+        font-size: .66rem;
+    }
+
+    .panel {
+        max-height: 230px;
+        overflow-y: auto;
+        padding: 9px 8px 10px;
+    }
+
+    .panelLead {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 1px;
+        margin-bottom: 8px;
+    }
+
+    .textGroups {
+        gap: 9px;
+    }
+
+    .toolAction {
+        min-height: 38px;
+        padding: 7px 8px;
+    }
+
+    .toolLabel {
+        font-size: .7rem;
+    }
 }

@@ -777,6 +777,18 @@ export default function Editor({
                     }
                     documentTitle={documentTitle ?? chapterTitle}
                     documentSubtitle={documentSubtitle}
+                    onInsertImage={bookId ? () => imageInputRef.current?.click() : undefined}
+                    stylePanel={
+                        <EditorDisplaySettingsPopover
+                            embedded
+                            settings={editorDisplay.settings}
+                            onWidthChange={editorDisplay.setWidth}
+                            onFontFamilyChange={editorDisplay.setFontFamily}
+                            onFontSizeChange={editorDisplay.setFontSize}
+                            onLineHeightChange={editorDisplay.setLineHeight}
+                            onReset={editorDisplay.reset}
+                        />
+                    }
                 />
             </div>
 
@@ -799,27 +811,6 @@ export default function Editor({
                     {t("ui.toolbar.exit_composition", "Exit composition mode")}
                 </button>
             )}
-
-            {/* EDITOR-DISPLAY-SETTINGS-01 C4: editor-display popover.
-             * Sits just below the Toolbar, right-aligned so it does
-             * not crowd the toolbar's left-aligned formatting buttons.
-             * Click opens a panel with the 4 controls + reset. */}
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    padding: "0 12px",
-                }}
-            >
-                <EditorDisplaySettingsPopover
-                    settings={editorDisplay.settings}
-                    onWidthChange={editorDisplay.setWidth}
-                    onFontFamilyChange={editorDisplay.setFontFamily}
-                    onFontSizeChange={editorDisplay.setFontSize}
-                    onLineHeightChange={editorDisplay.setLineHeight}
-                    onReset={editorDisplay.reset}
-                />
-            </div>
 
             {/* TTS Preview Player */}
             {previewAudioUrl && (

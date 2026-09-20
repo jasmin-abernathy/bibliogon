@@ -66,8 +66,8 @@ test.describe('Editor math toolbar button', () => {
     const editor = page.locator('.ProseMirror').first()
     await editor.click()
 
-    // The math node is an atom (no inline typing): the button opens a prompt
-    // for the LaTeX, then inserts the rendered node.
+    // The math node is an atom: open Insert, then prompt for LaTeX.
+    await page.getByTestId('toolbar-category-insert').click()
     await page.getByTestId('toolbar-formula').click()
     const promptInput = page.getByRole('textbox')
     await expect(promptInput).toBeVisible({timeout: 5000})

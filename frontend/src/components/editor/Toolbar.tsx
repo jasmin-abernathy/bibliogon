@@ -1,7 +1,7 @@
 import {Editor} from "@tiptap/react";
+import {useEffect, useState, type ReactNode} from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {useI18n} from "../../hooks/useI18n";
-import {CollapsibleToolbar} from "./CollapsibleToolbar";
 import {useDialog} from "../shared/AppDialog";
 import {notify} from "../../utils/platform/notify";
 import {copyToClipboard} from "../../utils/platform/clipboard";
@@ -53,6 +53,12 @@ import {
     ChevronDown,
     Maximize2,
     Minimize2,
+    Type,
+    Palette,
+    CirclePlus,
+    WandSparkles,
+    Eye,
+    ImagePlus,
 } from "lucide-react";
 
 interface Props {
@@ -103,11 +109,67 @@ interface Props {
      *  modes. ArticleEditor passes ``article.subtitle``;
      *  BookEditor leaves it unset. */
     documentSubtitle?: string;
+    /** Embedded visual style controls shown in the Style panel. */
+    stylePanel?: ReactNode;
+    /** Opens the image picker used by the editor. */
+    onInsertImage?: () => void;
 }
 
-export default function Toolbar({editor, markdownMode, onToggleMarkdown, onToggleSearch, focusMode, onToggleFocus, compositionMode, onToggleComposition, isFullscreen, onToggleFullscreen, spellcheckActive, onToggleSpellcheck, onPreviewAudio, previewLoading, previewDisabledReason, aiPanelActive, onToggleAi, aiDisabledReason, spellcheckDisabledReason, styleCheckActive, styleCheckLoading, onToggleStyleCheck, documentTitle, documentSubtitle}: Props) {
-    const {t} = useI18n();
+type PanelKey = "text" | "style" | "insert" | "tools" | "view";
+
+export default function Toolbar({
+    editor,
+    markdownMode,
+    onToggleMarkdown,
+    onToggleSearch,
+    focusMode,
+    onToggleFocus,
+    compositionMode,
+    onToggleComposition,
+    isFullscreen,
+    onToggleFullscreen,
+    spellcheckActive,
+    onToggleSpellcheck,
+    onPreviewAudio,
+    previewLoading,
+    previewDisabledReason,
+    aiPanelActive,
+    onToggleAi,
+    aiDisabledReason,
+    spellcheckDisabledReason,
+    styleCheckActive,
+    styleCheckLoading,
+    onToggleStyleCheck,
+    documentTitle,
+    documentSubtitle,
+    stylePanel,
+    onInsertImage,
+}: Props) {
+    const {t, lang} = useI18n();
     const dialog = useDialog();
+    const [activePanel, setActivePanel] = useState<PanelKey>("text");
+    const localLabel = (fr: string, en: string) => (lang === "fr" ? fr : en);
+
+    useEffect(() => {
+        if (
+            !editor ||
+            markdownMode ||
+            typeof editor.on !== "function" ||
+            typeof editor.off !== "function"
+        ) return;
+        const showTextTools = () => setActivePanel("text");
+        editor.on("focus", showTextTools);
+        editor.on("selectionUpdate", showTextTools);
+        return () => {
+            editor.off("focus", showTextTools);
+            editor.off("selectionUpdate", showTextTools);
+        };
+    }, [editor, markdownMode]);
+
+    useEffect(() => {
+        if (markdownMode) setActivePanel("view");
+    }, [markdownMode]);
+
     if (!editor) return null;
 
     const promptForMath = (kind: "inline" | "block") =>
@@ -378,272 +440,304 @@ export default function Toolbar({editor, markdownMode, onToggleMarkdown, onToggl
     const cx = (...names: (string | false | undefined | null)[]) =>
         names.filter(Boolean).join(" ");
 
-    return (
-        <CollapsibleToolbar
-            expandLabel={t("ui.toolbar.expand_toolbar", "Werkzeugleiste ausklappen")}
-            collapseLabel={t("ui.toolbar.collapse_toolbar", "Werkzeugleiste einklappen")}
+    const actionFor = (testId: string) =>
+        items.find((item) => item.testId === testId);
+
+    const renderAction = (testId: string) => {
+        const action = actionFor(testId);
+        if (!action || !action.icon || !action.action || !action.title || action.hidden) return null;
+        const visibleLabel = action.title.replace(/\s*\([^)]*\)\s*$/, "");
+        return (
+            <button
+                key={testId}
+                type="button"
+                onClick={action.action}
+                title={action.title}
+                aria-label={action.title}
+                aria-pressed={action.active}
+                data-testid={action.testId}
+                className={cx(styles.toolAction, action.active && styles.toolActionActive)}
+            >
+                <span className={styles.toolIcon}>{action.icon}</span>
+                <span className={styles.toolLabel}>{visibleLabel}</span>
+            </button>
+        );
+    };
+
+    const category = (
+        key: PanelKey,
+        icon: ReactNode,
+        label: string,
+        testId: string,
+    ) => (
+        <button
+            type="button"
+            className={cx(styles.categoryButton, activePanel === key && styles.categoryButtonActive)}
+            aria-pressed={activePanel === key}
+            aria-controls={`toolbar-panel-${key}`}
+            onClick={() => setActivePanel(key)}
+            data-testid={testId}
+            title={label}
         >
-        <div className={styles.toolbar}>
-            {items.map((item, i) => {
-                if ("hidden" in item && item.hidden) return null;
-                if ("type" in item && item.type === "separator") {
-                    return <div key={i} className={styles.separator}/>;
-                }
-                const btn = item as {
-                    icon: React.ReactNode;
-                    action: () => void;
-                    active: boolean;
-                    title: string;
-                    testId?: string;
-                };
-                return (
-                    <button
-                        key={i}
-                        onClick={btn.action}
-                        title={btn.title}
-                        aria-label={btn.title}
-                        aria-pressed={btn.active}
-                        data-testid={btn.testId}
-                        className={cx(styles.button, btn.active && styles.buttonActive)}
-                    >
-                        {btn.icon}
-                    </button>
-                );
-            })}
+            {icon}
+            <span>{label}</span>
+        </button>
+    );
 
-            {/* Spacer */}
-            <div className={styles.spacer}/>
-
-            {/* Copy split-button: default action copies as Markdown;
-             *  the chevron exposes "Copy as plain text" for paste-
-             *  targets that mangle Markdown (email, notes, chat).
-             *  Hidden in markdown-edit mode — the textarea already
-             *  shows Markdown and the user can select-all + Ctrl-C. */}
-            {!markdownMode && (
-                <div className={styles.copyGroup} data-testid="toolbar-copy-group">
+    const copyControls = !markdownMode ? (
+        <div className={styles.copyGroup} data-testid="toolbar-copy-group">
+            <button
+                type="button"
+                onClick={() => void handleCopy("markdown")}
+                title={t("ui.toolbar.copy_markdown_tooltip", "Copy as Markdown")}
+                aria-label={t("ui.toolbar.copy_markdown_tooltip", "Copy as Markdown")}
+                data-testid="toolbar-copy-markdown"
+                className={styles.toolAction}
+            >
+                <Copy size={17}/>
+                <span className={styles.toolLabel}>{localLabel("Copier", "Copy")}</span>
+            </button>
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
                     <button
                         type="button"
-                        onClick={() => {
-                            void handleCopy("markdown");
-                        }}
-                        title={t(
-                            "ui.toolbar.copy_markdown_tooltip",
-                            "Copy as Markdown",
-                        )}
-                        aria-label={t(
-                            "ui.toolbar.copy_markdown_tooltip",
-                            "Copy as Markdown",
-                        )}
-                        data-testid="toolbar-copy-markdown"
-                        className={styles.button}
+                        title={t("ui.toolbar.copy_more_tooltip", "Copy options")}
+                        aria-label={t("ui.toolbar.copy_more_tooltip", "Copy options")}
+                        data-testid="toolbar-copy-chevron"
+                        className={styles.copyChevron}
                     >
-                        <Copy size={16}/>
+                        <ChevronDown size={14}/>
                     </button>
-                    <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="hamburger-menu-content" align="end" sideOffset={4}>
+                        <DropdownMenu.Item
+                            className="hamburger-menu-item"
+                            data-testid="toolbar-copy-markdown-item"
+                            onSelect={() => void handleCopy("markdown")}
+                        >
+                            {t("ui.toolbar.copy_as_markdown", "Copy as Markdown")}
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                            className="hamburger-menu-item"
+                            data-testid="toolbar-copy-plain-item"
+                            onSelect={() => void handleCopy("plain")}
+                        >
+                            {t("ui.toolbar.copy_as_plain", "Copy as plain text")}
+                        </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+        </div>
+    ) : null;
+
+    return (
+        <div className={styles.shell} data-testid="editor-tool-dock">
+            <nav className={styles.categoryBar} aria-label={localLabel("Outils d’édition", "Editing tools")}>
+                {category("text", <Type size={20}/>, localLabel("Texte", "Text"), "toolbar-category-text")}
+                {category("style", <Palette size={20}/>, localLabel("Style", "Style"), "toolbar-category-style")}
+                {category("insert", <CirclePlus size={20}/>, localLabel("Ajouter", "Insert"), "toolbar-category-insert")}
+                {category("tools", <WandSparkles size={20}/>, localLabel("Outils", "Tools"), "toolbar-category-tools")}
+                {category("view", <Eye size={20}/>, localLabel("Affichage", "View"), "toolbar-category-view")}
+            </nav>
+
+            {activePanel === "text" && !markdownMode && (
+                <section
+                    id="toolbar-panel-text"
+                    className={styles.panel}
+                    data-testid="toolbar-text-panel"
+                    aria-label={localLabel("Outils de texte", "Text tools")}
+                >
+                    <div className={styles.panelLead}>
+                        <strong>{localLabel("Texte", "Text")}</strong>
+                        <span>{localLabel("Les outils utiles pendant l’écriture.", "The useful controls while writing.")}</span>
+                    </div>
+                    <div className={styles.textGroups}>
+                        <div className={styles.toolGroup}>
+                            <span className={styles.groupLabel}>{localLabel("Mise en forme", "Format")}</span>
+                            <div className={styles.toolGrid}>
+                                {["toolbar-bold","toolbar-italic","toolbar-underline","toolbar-highlight","toolbar-strikethrough"].map(renderAction)}
+                            </div>
+                        </div>
+                        <div className={styles.toolGroup}>
+                            <span className={styles.groupLabel}>{localLabel("Structure", "Structure")}</span>
+                            <div className={styles.toolGrid}>
+                                {["toolbar-h1","toolbar-h2","toolbar-h3","toolbar-blockquote","toolbar-bullet-list","toolbar-ordered-list","toolbar-task-list"].map(renderAction)}
+                            </div>
+                        </div>
+                        <div className={styles.toolGroup}>
+                            <span className={styles.groupLabel}>{localLabel("Alignement", "Alignment")}</span>
+                            <div className={styles.toolGrid}>
+                                {["toolbar-align-left","toolbar-align-center","toolbar-align-right","toolbar-align-justify"].map(renderAction)}
+                            </div>
+                        </div>
+                        <div className={styles.toolGroup}>
+                            <span className={styles.groupLabel}>{localLabel("Plus", "More")}</span>
+                            <div className={styles.toolGrid}>
+                                {["toolbar-code","toolbar-subscript","toolbar-superscript","toolbar-undo","toolbar-redo"].map(renderAction)}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {activePanel === "style" && !markdownMode && (
+                <section
+                    id="toolbar-panel-style"
+                    className={styles.panel}
+                    data-testid="toolbar-style-panel"
+                    aria-label={localLabel("Style et lecture", "Style and reading")}
+                >
+                    <div className={styles.panelLead}>
+                        <strong>{localLabel("Style", "Style")}</strong>
+                        <span>{localLabel("Largeur, police, taille et confort de lecture.", "Width, font, size and reading comfort.")}</span>
+                    </div>
+                    <div className={styles.stylePanelHost}>{stylePanel}</div>
+                    {onToggleStyleCheck && (
+                        <button
+                            type="button"
+                            onClick={onToggleStyleCheck}
+                            disabled={styleCheckLoading}
+                            title={t("ui.toolbar.style_check", "Style check")}
+                            aria-label={t("ui.toolbar.style_check", "Style check")}
+                            data-testid="toolbar-style-check"
+                            className={cx(styles.toolAction, styleCheckActive && styles.toolActionActive)}
+                        >
+                            <Wrench size={17}/>
+                            <span className={styles.toolLabel}>{localLabel("Analyser le style", "Check writing style")}</span>
+                        </button>
+                    )}
+                </section>
+            )}
+
+            {activePanel === "insert" && !markdownMode && (
+                <section
+                    id="toolbar-panel-insert"
+                    className={styles.panel}
+                    data-testid="toolbar-insert-panel"
+                    aria-label={localLabel("Ajouter un élément", "Insert an element")}
+                >
+                    <div className={styles.panelLead}>
+                        <strong>{localLabel("Ajouter", "Insert")}</strong>
+                        <span>{localLabel("Insérez seulement ce dont le livre a besoin.", "Insert only what the book needs.")}</span>
+                    </div>
+                    <div className={styles.toolGrid}>
+                        {onInsertImage && (
                             <button
                                 type="button"
-                                title={t(
-                                    "ui.toolbar.copy_more_tooltip",
-                                    "Copy options",
-                                )}
-                                aria-label={t(
-                                    "ui.toolbar.copy_more_tooltip",
-                                    "Copy options",
-                                )}
-                                data-testid="toolbar-copy-chevron"
-                                className={styles.copyChevron}
+                                onClick={onInsertImage}
+                                className={styles.toolAction}
+                                data-testid="toolbar-insert-image"
+                                title={localLabel("Ajouter une image", "Insert image")}
+                                aria-label={localLabel("Ajouter une image", "Insert image")}
                             >
-                                <ChevronDown size={12}/>
+                                <ImagePlus size={17}/>
+                                <span className={styles.toolLabel}>{localLabel("Image", "Image")}</span>
                             </button>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Portal>
-                            <DropdownMenu.Content
-                                className="hamburger-menu-content"
-                                align="end"
-                                sideOffset={4}
+                        )}
+                        {["toolbar-table","toolbar-footnote","toolbar-horizontal-rule","toolbar-formula","toolbar-formula-block","toolbar-code-block"].map(renderAction)}
+                    </div>
+                </section>
+            )}
+
+            {activePanel === "tools" && (
+                <section
+                    id="toolbar-panel-tools"
+                    className={styles.panel}
+                    data-testid="toolbar-tools-panel"
+                    aria-label={localLabel("Outils complémentaires", "Additional tools")}
+                >
+                    <div className={styles.panelLead}>
+                        <strong>{localLabel("Outils", "Tools")}</strong>
+                        <span>{localLabel("Recherche, correction, audio et assistance.", "Search, checking, audio and assistance.")}</span>
+                    </div>
+                    <div className={styles.toolGrid}>
+                        {copyControls}
+                        {onToggleSearch && !markdownMode && (
+                            <button type="button" onClick={onToggleSearch} className={styles.toolAction} data-testid="toolbar-search">
+                                <Search size={17}/><span className={styles.toolLabel}>{localLabel("Rechercher", "Search")}</span>
+                            </button>
+                        )}
+                        {!markdownMode && (
+                            <button
+                                type="button"
+                                onClick={onToggleSpellcheck || undefined}
+                                disabled={!onToggleSpellcheck || !!spellcheckDisabledReason}
+                                title={spellcheckDisabledReason || t("ui.toolbar.spellcheck", "Spellcheck")}
+                                className={cx(styles.toolAction, spellcheckActive && styles.toolActionActive, (!onToggleSpellcheck || !!spellcheckDisabledReason) && styles.buttonDisabled)}
+                                data-testid="toolbar-spellcheck"
                             >
-                                <DropdownMenu.Item
-                                    className="hamburger-menu-item"
-                                    data-testid="toolbar-copy-markdown-item"
-                                    onSelect={() => void handleCopy("markdown")}
-                                >
-                                    {t(
-                                        "ui.toolbar.copy_as_markdown",
-                                        "Copy as Markdown",
-                                    )}
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item
-                                    className="hamburger-menu-item"
-                                    data-testid="toolbar-copy-plain-item"
-                                    onSelect={() => void handleCopy("plain")}
-                                >
-                                    {t(
-                                        "ui.toolbar.copy_as_plain",
-                                        "Copy as plain text",
-                                    )}
-                                </DropdownMenu.Item>
-                            </DropdownMenu.Content>
-                        </DropdownMenu.Portal>
-                    </DropdownMenu.Root>
-                </div>
+                                <SpellCheck size={17}/><span className={styles.toolLabel}>{localLabel("Orthographe", "Spelling")}</span>
+                            </button>
+                        )}
+                        {!markdownMode && (
+                            <button
+                                type="button"
+                                onClick={onPreviewAudio || undefined}
+                                disabled={!onPreviewAudio || previewLoading || !!previewDisabledReason}
+                                title={previewDisabledReason || t("ui.toolbar.tts_preview", "Audio preview")}
+                                className={cx(styles.toolAction, (!onPreviewAudio || !!previewDisabledReason) && styles.buttonDisabled)}
+                                data-testid="toolbar-tts-preview"
+                            >
+                                <Headphones size={17}/><span className={styles.toolLabel}>{localLabel("Écouter", "Listen")}</span>
+                            </button>
+                        )}
+                        {!markdownMode && (
+                            <button
+                                type="button"
+                                onClick={onToggleAi || undefined}
+                                disabled={!onToggleAi || !!aiDisabledReason}
+                                title={aiDisabledReason || t("ui.toolbar.ai_assistant", "AI assistant")}
+                                className={cx(styles.toolAction, aiPanelActive && styles.toolActionActive, (!onToggleAi || !!aiDisabledReason) && styles.buttonDisabled)}
+                                data-testid="toolbar-ai"
+                            >
+                                <Sparkles size={17}/><span className={styles.toolLabel}>{localLabel("Assistant IA", "AI assistant")}</span>
+                            </button>
+                        )}
+                    </div>
+                </section>
             )}
 
-            {/* Search toggle */}
-            {onToggleSearch && !markdownMode && (
-                <button
-                    onClick={onToggleSearch}
-                    title={t("ui.toolbar.search", "Suchen & Ersetzen") + " (Ctrl+H)"}
-                    aria-label={t("ui.toolbar.search", "Suchen & Ersetzen")}
-                    data-testid="toolbar-search"
-                    className={styles.button}
+            {activePanel === "view" && (
+                <section
+                    id="toolbar-panel-view"
+                    className={styles.panel}
+                    data-testid="toolbar-view-panel"
+                    aria-label={localLabel("Affichage", "View")}
                 >
-                    <Search size={16}/>
-                </button>
+                    <div className={styles.panelLead}>
+                        <strong>{localLabel("Affichage", "View")}</strong>
+                        <span>{localLabel("Changez la façon de travailler, pas le contenu.", "Change how you work, not the content.")}</span>
+                    </div>
+                    <div className={styles.toolGrid}>
+                        {onToggleFocus && !markdownMode && (
+                            <button type="button" onClick={onToggleFocus} className={cx(styles.toolAction, focusMode && styles.toolActionActive)} data-testid="toolbar-focus">
+                                <Focus size={17}/><span className={styles.toolLabel}>{localLabel("Focus", "Focus")}</span>
+                            </button>
+                        )}
+                        {onToggleComposition && !markdownMode && (
+                            <button type="button" onClick={onToggleComposition} className={cx(styles.toolAction, compositionMode && styles.toolActionActive)} data-testid="toolbar-composition" aria-pressed={compositionMode ? "true" : "false"}>
+                                <Feather size={17}/><span className={styles.toolLabel}>{localLabel("Écriture seule", "Distraction free")}</span>
+                            </button>
+                        )}
+                        {onToggleFullscreen && (
+                            <button type="button" onClick={onToggleFullscreen} className={cx(styles.toolAction, isFullscreen && styles.toolActionActive)} data-testid="toolbar-fullscreen" aria-pressed={isFullscreen ? "true" : "false"}>
+                                {isFullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+                                <span className={styles.toolLabel}>{isFullscreen ? localLabel("Quitter le plein écran", "Exit fullscreen") : localLabel("Plein écran", "Fullscreen")}</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={onToggleMarkdown}
+                            data-testid="toolbar-markdown-toggle"
+                            className={cx(styles.toolAction, markdownMode && styles.toolActionActive)}
+                        >
+                            {markdownMode ? <FileText size={17}/> : <FileCode size={17}/>}
+                            <span className={styles.toolLabel}>{markdownMode ? "WYSIWYG" : "Markdown"}</span>
+                        </button>
+                    </div>
+                </section>
             )}
-
-            {/* Focus mode toggle */}
-            {onToggleFocus && !markdownMode && (
-                <button
-                    onClick={onToggleFocus}
-                    title={t("ui.toolbar.focus_mode", "Focus Mode")}
-                    aria-label={t("ui.toolbar.focus_mode", "Focus Mode")}
-                    data-testid="toolbar-focus"
-                    className={cx(styles.button, focusMode && styles.buttonActive)}
-                >
-                    <Focus size={16}/>
-                </button>
-            )}
-
-            {/* Composition / distraction-free mode toggle
-                (COMPOSITION-DISTRACTION-FREE-MODE-01). Umbrella mode:
-                hides chrome + paper backdrop + dimming + typewriter
-                scroll. Ctrl+Shift+D shortcut; Esc exits. */}
-            {onToggleComposition && !markdownMode && (
-                <button
-                    onClick={onToggleComposition}
-                    title={t("ui.toolbar.composition_mode", "Composition mode") + " (Ctrl+Shift+D)"}
-                    aria-label={t("ui.toolbar.composition_mode", "Composition mode")}
-                    aria-pressed={compositionMode ? "true" : "false"}
-                    aria-keyshortcuts="Control+Shift+D"
-                    data-testid="toolbar-composition"
-                    className={cx(styles.button, compositionMode && styles.buttonActive)}
-                >
-                    <Feather size={16}/>
-                </button>
-            )}
-
-            {/* Browser-native fullscreen toggle
-                (EDITOR-FULLSCREEN-NATIVE-01). Hidden when the
-                parent doesn't pass onToggleFullscreen (e.g.
-                browser lacks Fullscreen API support). F11 is
-                browser-default; the JS shortcut is Ctrl+Shift+F.
-                aria-keyshortcuts declares both per W3C ARIA. */}
-            {onToggleFullscreen && (
-                <button
-                    onClick={onToggleFullscreen}
-                    title={
-                        isFullscreen
-                            ? t("ui.toolbar.exit_fullscreen", "Vollbild verlassen") + " (F11 / Ctrl+Shift+F)"
-                            : t("ui.toolbar.fullscreen", "Vollbild") + " (F11 / Ctrl+Shift+F)"
-                    }
-                    aria-label={
-                        isFullscreen
-                            ? t("ui.toolbar.exit_fullscreen", "Vollbild verlassen")
-                            : t("ui.toolbar.fullscreen", "Vollbild")
-                    }
-                    aria-pressed={isFullscreen ? "true" : "false"}
-                    aria-keyshortcuts="F11 Control+Shift+F"
-                    data-testid="toolbar-fullscreen"
-                    className={cx(styles.button, isFullscreen && styles.buttonActive)}
-                >
-                    {isFullscreen ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}
-                </button>
-            )}
-
-            {/* Style check toggle (ms-tools) */}
-            {onToggleStyleCheck && !markdownMode && (
-                <button
-                    onClick={onToggleStyleCheck}
-                    disabled={styleCheckLoading}
-                    title={t("ui.toolbar.style_check", "Stilprüfung")}
-                    aria-label={t("ui.toolbar.style_check", "Stilprüfung")}
-                    data-testid="toolbar-style-check"
-                    className={cx(
-                        styles.button,
-                        styleCheckActive && styles.buttonActive,
-                        styleCheckLoading && styles.buttonLoading,
-                    )}
-                >
-                    <Wrench size={16}/>
-                </button>
-            )}
-
-            {/* Spellcheck toggle */}
-            {!markdownMode && (
-                <button
-                    onClick={onToggleSpellcheck || undefined}
-                    disabled={!onToggleSpellcheck || !!spellcheckDisabledReason}
-                    title={spellcheckDisabledReason || t("ui.toolbar.spellcheck", "Rechtschreibprüfung (LanguageTool)")}
-                    aria-label={t("ui.toolbar.spellcheck", "Rechtschreibprüfung")}
-                    data-testid="toolbar-spellcheck"
-                    className={cx(
-                        styles.button,
-                        spellcheckActive && styles.buttonActive,
-                        (!onToggleSpellcheck || spellcheckDisabledReason) && styles.buttonDisabled,
-                    )}
-                >
-                    <SpellCheck size={16}/>
-                </button>
-            )}
-
-            {/* Audio preview */}
-            {!markdownMode && (
-                <button
-                    onClick={onPreviewAudio || undefined}
-                    disabled={!onPreviewAudio || previewLoading || !!previewDisabledReason}
-                    title={previewDisabledReason || t("ui.toolbar.tts_preview", "Vorhören (TTS)")}
-                    aria-label={t("ui.toolbar.tts_preview", "Vorhören")}
-                    data-testid="toolbar-tts-preview"
-                    className={cx(
-                        styles.button,
-                        previewLoading && styles.buttonLoading,
-                        (!onPreviewAudio || previewDisabledReason) && styles.buttonDisabled,
-                    )}
-                >
-                    <Headphones size={16}/>
-                </button>
-            )}
-
-            {/* AI assistant */}
-            {!markdownMode && (
-                <button
-                    onClick={onToggleAi || undefined}
-                    disabled={!onToggleAi || !!aiDisabledReason}
-                    title={aiDisabledReason || t("ui.toolbar.ai_assistant", "KI-Assistent")}
-                    aria-label={t("ui.toolbar.ai_assistant", "KI-Assistent")}
-                    data-testid="toolbar-ai"
-                    className={cx(
-                        styles.button,
-                        aiPanelActive && styles.buttonActive,
-                        (!onToggleAi || aiDisabledReason) && styles.buttonDisabled,
-                    )}
-                >
-                    <Sparkles size={16}/>
-                </button>
-            )}
-
-            {/* Markdown toggle */}
-            <button
-                onClick={onToggleMarkdown}
-                title={markdownMode ? t("ui.toolbar.wysiwyg_mode", "WYSIWYG-Modus") : t("ui.toolbar.markdown_mode", "Markdown-Modus")}
-                data-testid="toolbar-markdown-toggle"
-                className={cx(styles.modeToggle, markdownMode && styles.modeToggleActive)}
-            >
-                {markdownMode ? <FileText size={14}/> : <FileCode size={14}/>}
-                {markdownMode ? "WYSIWYG" : "Markdown"}
-            </button>
         </div>
-        </CollapsibleToolbar>
     );
 }
