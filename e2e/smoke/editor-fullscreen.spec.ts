@@ -47,6 +47,8 @@ test.describe("Editor fullscreen toggles (EDITOR-FULLSCREEN-NATIVE-01)", () => {
         await createChapter(book.id, "Chapter 1", "<p>Body</p>");
         await page.goto(`/book/${book.id}`);
 
+        await expect(page.getByTestId("toolbar-category-view")).toBeVisible({timeout: 8000});
+        await page.getByTestId("toolbar-category-view").click();
         const fsButton = page.getByTestId("toolbar-fullscreen");
         await expect(fsButton).toBeVisible({timeout: 8000});
         await expect(fsButton).toHaveAttribute(

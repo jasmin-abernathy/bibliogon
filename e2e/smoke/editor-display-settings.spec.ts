@@ -1,7 +1,7 @@
 /**
  * Editor display settings smoke (EDITOR-DISPLAY-SETTINGS-01 C6).
  *
- * Exercises the toolbar popover + the CSS-variable cascade that
+ * Exercises the toolbar Style panel + the CSS-variable cascade that
  * lets the user adjust width / font / size / line-height per-
  * device:
  *
@@ -40,16 +40,14 @@ import {test, expect, createArticle} from "../fixtures/base";
  * missing panel (it still fails after the timeout).
  */
 async function openDisplaySettings(page: Page) {
-    const toggle = page.getByTestId("editor-display-settings-toggle");
-    await expect(toggle).toBeVisible({timeout: 10000});
-    const panel = page.getByTestId("editor-display-settings-panel");
-    await expect(async () => {
-        if ((await panel.count()) === 0) {
-            await toggle.click();
-        }
-        await expect(panel).toBeVisible({timeout: 1000});
-    }).toPass({timeout: 15000});
-    return panel;
+    const category = page.getByTestId("toolbar-category-style");
+    await expect(category).toBeVisible({timeout: 10000});
+    await category.click();
+    const panel = page.getByTestId("toolbar-style-panel");
+    await expect(panel).toBeVisible({timeout: 5000});
+    const embedded = page.getByTestId("editor-display-settings-embedded");
+    await expect(embedded).toBeVisible();
+    return embedded;
 }
 
 test.describe("Editor display settings smoke", () => {
@@ -92,9 +90,7 @@ test.describe("Editor display settings smoke", () => {
         // mounts. Wait for the editor before sampling, and poll the
         // inline style (the apply is post-mount, not pre-paint).
         await page.reload();
-        await expect(
-            page.getByTestId("editor-display-settings-toggle"),
-        ).toBeVisible({timeout: 10000});
+        await expect(page.locator(".ProseMirror")).toBeVisible({timeout: 10000});
         await expect
             .poll(
                 async () =>

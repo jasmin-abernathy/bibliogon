@@ -721,7 +721,7 @@ export default function Toolbar({
                             </button>
                         )}
                         {onToggleFullscreen && (
-                            <button type="button" onClick={onToggleFullscreen} className={cx(styles.toolAction, isFullscreen && styles.toolActionActive)} data-testid="toolbar-fullscreen" aria-pressed={isFullscreen ? "true" : "false"}>
+                            <button type="button" onClick={onToggleFullscreen} className={cx(styles.toolAction, isFullscreen && styles.toolActionActive)} data-testid="toolbar-fullscreen" aria-keyshortcuts="F11 Control+Shift+F" aria-pressed={isFullscreen ? "true" : "false"}>
                                 {isFullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
                                 <span className={styles.toolLabel}>{isFullscreen ? localLabel("Quitter le plein écran", "Exit fullscreen") : localLabel("Plein écran", "Fullscreen")}</span>
                             </button>
