@@ -9,7 +9,7 @@
 
 import {expect, type Locator, type Page} from "@playwright/test";
 
-/** The 13 sidebar tab ids, in sidebar order. */
+/** The 13 default-visible sidebar tab ids, in sidebar order. Optional tabs are excluded. */
 export const SETTINGS_TABS = [
     "erscheinungsbild",
     "editor",
@@ -19,10 +19,10 @@ export const SETTINGS_TABS = [
     "comments",
     "plugins",
     "ai",
+    "daten",
     "backups",
     "erweitert",
     "about",
-    "support",
     "danger-zone",
 ] as const;
 

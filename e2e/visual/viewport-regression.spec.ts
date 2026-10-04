@@ -54,7 +54,7 @@ const VIEWPORTS = [
 async function prep(page: Page): Promise<void> {
     await page.addInitScript(() => {
         try {
-            localStorage.setItem("bibliogon-app-theme", "warm-literary");
+            localStorage.setItem("atelier-epub-app-theme", "warm-literary");
             localStorage.setItem("bibliogon-theme", "light");
             localStorage.setItem("bibliogon-donation-onboarding-seen", "true");
             localStorage.setItem("bibliogon-ai-setup-dismissed", "true");

@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import {useI18n} from "../../hooks/useI18n";
-import {PALETTES} from "../../themes/palettes";
+import {DEFAULT_PALETTE, PALETTES} from "../../themes/palettes";
 import styles from "../../pages/Settings.module.css";
 import {RadixSelect} from "../shared/RadixSelect";
 import {SectionHeader} from "./SectionHeader";
@@ -15,7 +15,7 @@ export function ErscheinungsbildSettings({config, onSave}: {
     const ui = (config.ui || {}) as Record<string, unknown>;
     const uiDashboard = (ui.dashboard || {}) as Record<string, unknown>;
 
-    const [theme, setTheme] = useState((ui.theme as string) || "warm-literary");
+    const [theme, setTheme] = useState((ui.theme as string) || DEFAULT_PALETTE);
     const [booksView, setBooksView] = useState(
         (uiDashboard.books_view as string) === "list" ? "list" : "grid",
     );
@@ -38,7 +38,7 @@ export function ErscheinungsbildSettings({config, onSave}: {
 
     useEffect(() => {
         if (userEdited.current) return; // never clobber an in-progress edit
-        setTheme((ui.theme as string) || "warm-literary");
+        setTheme((ui.theme as string) || DEFAULT_PALETTE);
         const dashboardCfg = (ui.dashboard || {}) as Record<string, unknown>;
         setBooksView((dashboardCfg.books_view as string) === "list" ? "list" : "grid");
         setArticlesView((dashboardCfg.articles_view as string) === "list" ? "list" : "grid");
@@ -88,7 +88,7 @@ export function ErscheinungsbildSettings({config, onSave}: {
                             userEdited.current = true;
                             setTheme(val);
                             document.documentElement.setAttribute("data-app-theme", val);
-                            localStorage.setItem("bibliogon-app-theme", val);
+                            localStorage.setItem("atelier-epub-app-theme", val);
                             triggerSave();
                         }}
                         testId="palette-select"

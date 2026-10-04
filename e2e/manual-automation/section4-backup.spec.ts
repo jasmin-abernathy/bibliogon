@@ -101,10 +101,17 @@ test.describe("Section 4 — TC-040 full backup cycle (release blocker)", () => 
             })
             .toBe(true);
 
-        const authorNames = (await listAuthors()).map((a) => a.name);
-        expect(authorNames).toEqual(
-            expect.arrayContaining(["Autor Eins", "Autor Zwei", "Autor Drei"]),
-        );
+        await expect
+            .poll(
+                async () => {
+                    const authorNames = (await listAuthors()).map((a) => a.name);
+                    return ["Autor Eins", "Autor Zwei", "Autor Drei"].every((name) =>
+                        authorNames.includes(name),
+                    );
+                },
+                {timeout: 15_000},
+            )
+            .toBe(true);
 
         const settings = await api<Record<string, unknown>>("/settings/app");
         expect((settings.ui as {theme?: string})?.theme).toBe("nord");

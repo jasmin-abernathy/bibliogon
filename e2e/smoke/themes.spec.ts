@@ -5,9 +5,9 @@
  * automated coverage. Pins:
  *
  * - Palette state machine: fresh localStorage defaults to
- *   warm-literary; each new palette (classic, studio, notebook)
+ *   potager; each new palette (classic, studio, notebook)
  *   applies data-app-theme; unknown localStorage values fall
- *   back to warm-literary via the isKnownPalette guard in
+ *   back to potager via the isKnownPalette guard in
  *   useTheme.ts.
  * - Light/dark toggle: ThemeToggle button flips the data-theme
  *   attribute and persists across reload, independent of palette.
@@ -49,7 +49,7 @@ type Palette = (typeof PALETTES)[number];
  * reads the stored value on first render. */
 async function seedPalette(page: Page, palette: string) {
     await page.addInitScript((value) => {
-        window.localStorage.setItem("bibliogon-app-theme", value);
+        window.localStorage.setItem("atelier-epub-app-theme", value);
     }, palette);
 }
 
@@ -68,9 +68,9 @@ async function getTheme(page: Page): Promise<string | null> {
 }
 
 test.describe("Themes - palette state machine via localStorage", () => {
-    test("fresh localStorage defaults to warm-literary", async ({page}) => {
+    test("fresh localStorage defaults to potager", async ({page}) => {
         await page.goto("/");
-        expect(await getAppTheme(page)).toBe("warm-literary");
+        expect(await getAppTheme(page)).toBe("potager");
     });
 
     for (const palette of ["classic", "studio", "notebook"] as const) {
@@ -81,14 +81,14 @@ test.describe("Themes - palette state machine via localStorage", () => {
         });
     }
 
-    test("unknown palette value in localStorage falls back to warm-literary", async ({page}) => {
+    test("unknown palette value in localStorage falls back to potager", async ({page}) => {
         // This is the isKnownPalette guard in useTheme.ts. The
         // regression would be a silent leak of an arbitrary string
         // into the data-app-theme attribute, leaving the CSS
         // unmatched and the UI visually unstyled.
         await seedPalette(page, "cyberpunk-pink");
         await page.goto("/");
-        expect(await getAppTheme(page)).toBe("warm-literary");
+        expect(await getAppTheme(page)).toBe("potager");
     });
 
     test("palette choice survives a page reload", async ({page}) => {
@@ -157,7 +157,7 @@ test.describe("Themes - palette selector via Settings UI", () => {
 
         // Persisted in localStorage
         const stored = await page.evaluate(() =>
-            window.localStorage.getItem("bibliogon-app-theme"),
+            window.localStorage.getItem("atelier-epub-app-theme"),
         );
         expect(stored).toBe("classic");
 
