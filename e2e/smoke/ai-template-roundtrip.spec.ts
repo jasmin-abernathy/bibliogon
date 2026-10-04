@@ -81,16 +81,14 @@ test.describe("AI-template Workflow C (external YAML round-trip)", () => {
         // on the dialog's visibility makes the open retry-safe.
         const importDialog = page.getByTestId("ai-template-import-dialog");
         await expect(async () => {
-            if (!(await importDialog.isVisible())) {
+            if (!(await importDialog.isVisible().catch(() => false))) {
                 await page.getByTestId("ai-template-import").click();
             }
             await expect(importDialog).toBeVisible({timeout: 1500});
+            await expect(importDialog.getByTestId("template-import-dropzone")).toBeVisible();
+            await expect(importDialog.getByTestId("ai-template-import-force")).toBeVisible();
+            await expect(importDialog.getByTestId("ai-template-import-submit")).toBeDisabled();
         }).toPass({timeout: 15000});
-        await expect(page.getByTestId("template-import-dropzone")).toBeVisible();
-        await expect(page.getByTestId("ai-template-import-force")).toBeVisible();
-        await expect(
-            page.getByTestId("ai-template-import-submit"),
-        ).toBeDisabled();
     });
 
     test("Articles dashboard exposes the New from template button", async ({page}) => {

@@ -256,9 +256,7 @@ test.describe("Picture-Book PageEditor smoke", () => {
             page.getByTestId("create-book-mode-template"),
         ).toBeVisible()
 
-        await page
-            .getByPlaceholder("Der Titel deines Buches")
-            .fill("Smoke Prose Book")
+        await page.getByTestId("create-book-title").fill("Smoke Prose Book")
         await fillAuthor(page, "Smoke Author")
         await page.getByTestId("create-book-submit").click()
 

@@ -1,7 +1,7 @@
 /**
  * Mobile header polish regression pins (#392 + #393).
  *
- * #392: the "Bibliogon" wordmark in the app header is `hidden sm:inline`,
+ * #392: the "Atelier EPUB" wordmark in the app header is `hidden sm:inline`,
  * so below the Tailwind `sm` breakpoint (640px) only the BookOpen icon
  * shows. Desktop/tablet keep icon + text.
  *
@@ -24,6 +24,7 @@ const TABLET = 768; // above sm
 const DESKTOP = 1440;
 
 const PALETTES = [
+    "potager",
     "warm-literary",
     "cool-modern",
     "nord",
@@ -34,16 +35,16 @@ const PALETTES = [
 
 async function seedPalette(page: Page, palette: string) {
     await page.addInitScript((value) => {
-        window.localStorage.setItem("bibliogon-app-theme", value);
+        window.localStorage.setItem("atelier-epub-app-theme", value);
     }, palette);
 }
 
 function brand(page: Page) {
-    return page.getByTestId("dashboard-header").getByText("Bibliogon");
+    return page.getByTestId("dashboard-header").getByText("Atelier EPUB");
 }
 
 test.describe("#392 - brand text hidden on mobile, visible on tablet/desktop", () => {
-    test("desktop shows icon + Bibliogon text", async ({page}) => {
+    test("desktop shows icon + Atelier EPUB text", async ({page}) => {
         await page.setViewportSize({width: DESKTOP, height: 900});
         await page.goto("/");
         await expect(page.getByTestId("dashboard-header")).toBeVisible();
@@ -64,7 +65,7 @@ test.describe("#392 - brand text hidden on mobile, visible on tablet/desktop", (
         await expect(brand(page)).toBeVisible();
     });
 
-    test("brand visibility is viewport-driven across all 6 palettes", async ({page}) => {
+    test("brand visibility is viewport-driven across all 7 palettes", async ({page}) => {
         for (const palette of PALETTES) {
             await seedPalette(page, palette);
 
