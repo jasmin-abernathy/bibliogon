@@ -1,5 +1,8 @@
 name: Visual Regression
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Pixel-diff visual regression (Playwright toHaveScreenshot) NIGHTLY, never
 # on PRs: committed screenshots change on every intentional UI PR, so gating
 # PRs on them would block legitimate layout changes. Same model as the
@@ -19,8 +22,6 @@ name: Visual Regression
 # then commit e2e/visual/*-snapshots/. See e2e/visual/README.md.
 
 on:
-  schedule:
-    - cron: "0 4 * * *" # nightly at 04:00 UTC (after the 03:00 slow-suite)
   workflow_dispatch:
     inputs:
       update_snapshots:

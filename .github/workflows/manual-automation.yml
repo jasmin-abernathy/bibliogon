@@ -1,5 +1,8 @@
 name: Manual-Testplan Automation
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Runs the manual-automation Playwright project (e2e/manual-automation/),
 # which closes the automatable TC-* gaps of docs/manual-tests/
 # MANUAL-TESTPLAN.md and runs the UX-audit walkthrough specs
@@ -15,8 +18,6 @@ name: Manual-Testplan Automation
 # need.
 
 on:
-  schedule:
-    - cron: "30 3 * * *" # nightly at 03:30 UTC (after e2e-smoke at 03:00)
   workflow_dispatch: {}
   push:
     branches:

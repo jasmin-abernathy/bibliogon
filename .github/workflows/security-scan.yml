@@ -1,5 +1,8 @@
 name: Security Scan
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Dependency-security watcher (#149). The PR/push enforcement already
 # lives in ci.yml (pip-audit + bandit + npm audit, all hard-blocking on
 # every push/PR to main/develop). This watcher closes the remaining gap:
@@ -19,8 +22,6 @@ name: Security Scan
 # .security-ignore.yml.
 
 on:
-  schedule:
-    - cron: "0 7 * * 0"  # weekly, Sunday 07:00 UTC
   workflow_dispatch:
 
 env:

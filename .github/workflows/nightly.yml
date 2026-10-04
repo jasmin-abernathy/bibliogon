@@ -1,5 +1,8 @@
 name: Nightly
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Nightly slow-suite (#289). These jobs are time-intensive but rarely catch a
 # real failure on a PR (in the last 30 runs: ci.yml 0 red, coverage.yml 1 red,
 # complexity-check.yml 0 red). Moving them off the PR path keeps PR CI under
@@ -25,8 +28,6 @@ name: Nightly
 # the E2E suite exceeds ~200 specs.
 
 on:
-  schedule:
-    - cron: "0 3 * * *"  # daily, 03:00 UTC
   workflow_dispatch:
 
 # The alarm + release-watcher jobs file and close issues (#779); everything

@@ -1,5 +1,8 @@
 name: E2E Smoke Tests
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Runs the Playwright smoke suite NIGHTLY (not on PRs). The serial suite
 # takes ~90 minutes against a live backend, so gating every PR on it stalls
 # the dev cycle while the real code-quality gates (Vitest, tsc, ESLint, ruff,
@@ -19,8 +22,6 @@ name: E2E Smoke Tests
 # e2e/ (Playwright lives there). Retries (2) come from the existing config.
 
 on:
-  schedule:
-    - cron: "0 3 * * *" # nightly at 03:00 UTC
   workflow_dispatch: {}
 
 # The alarm job files and closes the tracking issue (#779).
