@@ -1,5 +1,7 @@
 name: CI audit validation 2026-10-04
 
+# Temporary validation harness for the 2026-10-04 scheduled-workflow repair.
+
 on:
   push:
     branches:
