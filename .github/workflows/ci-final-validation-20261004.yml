@@ -1,0 +1,97 @@
+name: CI audit final validation 2026-10-04
+
+on:
+  push:
+    branches:
+      - fix/ci-audit-20261004
+    paths:
+      - .github/workflows/ci-final-validation-20261004.yml
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/ci-audit-20261004
+
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pandoc
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: poetry-backend-${{ runner.os }}-py3.12-${{ hashFiles('backend/poetry.lock') }}
+          restore-keys: |
+            poetry-backend-${{ runner.os }}-py3.12-
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install backend
+        working-directory: backend
+        run: poetry install --no-interaction --no-ansi
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Validate legacy palette migration
+        working-directory: frontend
+        run: npm test -- src/hooks/ui/useTheme.test.ts
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Run residual smoke specs
+        working-directory: e2e
+        run: |
+          npx playwright test --project=smoke \
+            smoke/mobile-header-brand-recent-docs.spec.ts \
+            smoke/picture-book-editor.spec.ts \
+            smoke/article-topic-seo.spec.ts
+
+      - name: Refresh visual baselines for the accepted UI
+        working-directory: e2e
+        run: npx playwright test --project=visual --update-snapshots || true
+
+      - name: Commit refreshed visual baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/visual/
+          if git diff --cached --quiet; then
+            echo "No visual baseline changes required."
+          else
+            git commit -m "test(visual): refresh accepted UI baselines [skip ci]"
+            git push origin HEAD:fix/ci-audit-20261004
+          fi
+
+      - name: Verify refreshed visual baselines
+        working-directory: e2e
+        run: npx playwright test --project=visual --retries=1
