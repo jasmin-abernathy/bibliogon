@@ -15,7 +15,6 @@
  */
 
 import {test, expect} from "../fixtures/base";
-import {clickMenuItem} from "../helpers/ui";
 
 const API = "http://localhost:8000/api";
 
@@ -47,18 +46,24 @@ test.describe("Reclassify Article ⇄ ArticleComment (F2c)", () => {
         });
         await page.goto(`/articles/${article.id}`);
 
-        // Wait for the editor to mount + the kebab to be present.
-        await expect(page.getByTestId("article-editor-actions-menu")).toBeVisible();
+        await page.waitForLoadState("networkidle");
+        const actionsMenu = page.getByTestId("article-editor-actions-menu");
+        const reclassifyItem = page.getByTestId("article-editor-menu-reclassify");
+        const confirmDialog = page.getByRole("dialog");
+        await expect(actionsMenu).toBeVisible();
 
-        // Open the kebab and pick "Move to comments".
-        await clickMenuItem(page, "article-editor-actions-menu");
-        await clickMenuItem(page, "article-editor-menu-reclassify");
+        await expect(async () => {
+            if (!(await reclassifyItem.isVisible().catch(() => false))) {
+                await actionsMenu.click();
+            }
+            await expect(reclassifyItem).toBeVisible({timeout: 1500});
+            await reclassifyItem.click();
+            await expect(confirmDialog).toBeVisible({timeout: 1500});
+        }).toPass({timeout: 15000});
 
         // AppDialog confirm appears — accept it. AppDialog uses a
         // generic confirm button; click by role to stay tolerant of
         // i18n.
-        const confirmDialog = page.getByRole("dialog");
-        await expect(confirmDialog).toBeVisible();
         await confirmDialog.getByRole("button", {name: /Move to comments|Löschen|Confirm/i}).click();
 
         // Navigates back to /articles.

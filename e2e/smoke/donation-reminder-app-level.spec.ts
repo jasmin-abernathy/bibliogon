@@ -25,6 +25,15 @@
 
 import {test, expect} from "../fixtures/base"
 
+const API = "http://localhost:8000/api"
+
+async function donationsEnabled(): Promise<boolean> {
+    const response = await fetch(`${API}/settings/app`)
+    if (!response.ok) return false
+    const config = await response.json() as {donations?: {enabled?: boolean}}
+    return config.donations?.enabled === true
+}
+
 // Match the localStorage keys exported from
 // frontend/src/components/DonationReminderBanner.tsx +
 // DonationOnboardingDialog.tsx. Repeated here as string
@@ -60,6 +69,10 @@ function seedReminderReady() {
 }
 
 test.describe("Donation reminder App-level mount (v0.35.1)", () => {
+    test.beforeEach(async () => {
+        test.skip(!(await donationsEnabled()), "Donations are disabled by the current app config")
+    })
+
     test("Banner appears on Dashboard after 7-day grace + onboarding-seen", async ({
         page,
     }) => {

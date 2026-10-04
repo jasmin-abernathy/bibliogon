@@ -31,9 +31,10 @@ test.describe("Learnset export (Phase 1 scaffold)", () => {
         // Retry-open per the #720 lesson: React.StrictMode's dev
         // double-mount can swallow the first Collapsible-toggle click.
         const button = page.getByTestId("sidebar-export-learnset");
+        const toolsToggle = page.getByTestId("chapter-sidebar-tools-toggle");
         await expect(async () => {
             if (!(await button.isVisible().catch(() => false))) {
-                await page.getByRole("button", {name: /Werkzeuge/}).click();
+                await toolsToggle.click();
             }
             await expect(button).toBeVisible({timeout: 1000});
         }).toPass({timeout: 15000});

@@ -298,7 +298,9 @@ export default function ArticleEditorSidebar({
                                             seo_title: e.target.value || null,
                                         })
                                     }
-                                    onBlur={() => persistMeta({ seo_title: article.seo_title })}
+                                    onBlur={(e) =>
+                                        persistMeta({ seo_title: e.currentTarget.value || null })
+                                    }
                                     placeholder={t(
                                         "ui.articles.seo_title_placeholder",
                                         "Faellt leer auf Titel zurück",
@@ -337,9 +339,9 @@ export default function ArticleEditorSidebar({
                                             seo_description: e.target.value || null,
                                         })
                                     }
-                                    onBlur={() =>
+                                    onBlur={(e) =>
                                         persistMeta({
-                                            seo_description: article.seo_description,
+                                            seo_description: e.currentTarget.value || null,
                                         })
                                     }
                                     rows={3}

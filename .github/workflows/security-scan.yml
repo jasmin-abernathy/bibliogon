@@ -43,6 +43,10 @@ jobs:
         working-directory: backend
         run: poetry install --no-interaction --no-ansi
 
+      - name: Upgrade audit runtime pip
+        working-directory: backend
+        run: poetry run python -m pip install --upgrade "pip>=26.2"
+
       - name: pip-audit (Phase 2 - blocks on non-ignored advisories)
         working-directory: backend
         run: |

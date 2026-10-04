@@ -20,7 +20,7 @@
  *  3. Settings       — Erscheinungsbild (Appearance) tab
  *
  * Themes are applied via the same localStorage keys useTheme reads
- * (`bibliogon-app-theme` = palette id, `bibliogon-theme` = light/dark),
+ * (`atelier-epub-app-theme` = palette id, `bibliogon-theme` = light/dark),
  * set through addInitScript BEFORE the first navigation so the app boots
  * directly in the target theme with no flash-of-default repaint.
  *
@@ -65,7 +65,7 @@ async function applyTheme(page: Page, palette: string, mode: string): Promise<vo
     await page.addInitScript(
         ({palette, mode}) => {
             try {
-                localStorage.setItem("bibliogon-app-theme", palette);
+                localStorage.setItem("atelier-epub-app-theme", palette);
                 localStorage.setItem("bibliogon-theme", mode);
                 localStorage.setItem("bibliogon-donation-onboarding-seen", "true");
                 localStorage.setItem("bibliogon-ai-setup-dismissed", "true");

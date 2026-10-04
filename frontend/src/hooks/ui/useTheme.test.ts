@@ -85,6 +85,20 @@ describe("useTheme", () => {
       expect(result.current.appTheme).toBe("nord")
     })
 
+    it("migrates a valid palette from the legacy localStorage key", () => {
+      localStorage.setItem("bibliogon-app-theme", "classic")
+      const {result} = renderHook(() => useTheme())
+      expect(result.current.appTheme).toBe("classic")
+      expect(localStorage.getItem("atelier-epub-app-theme")).toBe("classic")
+    })
+
+    it("prefers the current palette key over the legacy key", () => {
+      localStorage.setItem("atelier-epub-app-theme", "studio")
+      localStorage.setItem("bibliogon-app-theme", "classic")
+      const {result} = renderHook(() => useTheme())
+      expect(result.current.appTheme).toBe("studio")
+    })
+
     it("falls back to default for unknown stored palette", () => {
       localStorage.setItem("atelier-epub-app-theme", "nonexistent-theme")
       const {result} = renderHook(() => useTheme())

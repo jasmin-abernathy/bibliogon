@@ -42,7 +42,7 @@ test.describe("Settings > About > Die App teilen (#643)", () => {
 
         // Preview target carries the non-stable warning.
         await expect(page.getByTestId("share-preview-warning")).toContainText(
-            "nicht stabil",
+            /not stable|nicht stabil|pas stable/i,
         );
     });
 });

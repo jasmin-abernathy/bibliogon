@@ -266,6 +266,7 @@ test.describe('D. Block elements', () => {
     await focusEditor(page)
     await page.keyboard.type('above the line')
     await page.keyboard.press('Enter')
+    await page.getByTestId("toolbar-category-insert").click()
     await page.getByTestId("toolbar-horizontal-rule").click()
     await expect(page.locator('.ProseMirror hr')).toBeVisible()
   })
@@ -274,6 +275,7 @@ test.describe('D. Block elements', () => {
     await openEditor(page, bookId)
     await focusEditor(page)
     await page.keyboard.type('code here')
+    await page.getByTestId("toolbar-category-insert").click()
     await page.getByTestId("toolbar-code-block").click()
     await expect(page.locator('.ProseMirror pre code')).toContainText('code here')
   })
@@ -379,18 +381,20 @@ test.describe('F. Text alignment', () => {
 
 test.describe('G. Integration', () => {
   let bookId: string
+  let chapterAId: string
+  let chapterBId: string
 
   test.beforeEach(async () => {
     const book = await createBook('Integration Test')
     bookId = book.id
-    await createChapter(bookId, 'Chapter A', 'Content A')
-    await createChapter(bookId, 'Chapter B', 'Content B')
+    chapterAId = (await createChapter(bookId, 'Chapter A', 'Content A')).id
+    chapterBId = (await createChapter(bookId, 'Chapter B', 'Content B')).id
   })
 
   test('switching chapters preserves content in each', async ({page}) => {
     await openEditor(page, bookId)
     // Select chapter A and type
-    await page.getByText('Chapter A').click()
+    await page.getByTestId(`chapter-item-${chapterAId}`).click()
     await expect(page.locator('.tiptap-editor')).toBeVisible()
     await focusEditor(page)
     await selectAll(page)
@@ -398,11 +402,11 @@ test.describe('G. Integration', () => {
     await expect(page.getByText(/Gespeichert|Saved/)).toBeVisible({timeout: 5000})
 
     // Switch to chapter B
-    await page.getByText('Chapter B').click()
+    await page.getByTestId(`chapter-item-${chapterBId}`).click()
     await expect(page.locator('.ProseMirror')).toBeVisible()
 
     // Switch back to chapter A - content should be preserved
-    await page.getByText('Chapter A').click()
+    await page.getByTestId(`chapter-item-${chapterAId}`).click()
     await expect(page.locator('.ProseMirror')).toContainText('Edited A')
   })
 
@@ -435,11 +439,7 @@ async function isToolbarButtonActive(
   page: import('@playwright/test').Page,
   testId: string,
 ): Promise<boolean> {
-  const btn = page.getByTestId(testId)
-  const className = await btn.getAttribute('class') || ''
-  // CSS Modules hash the class name to ``_buttonActive_<hash>_<line>``,
-  // so a plain substring match is enough.
-  return className.includes('buttonActive')
+  return (await page.getByTestId(testId).getAttribute('aria-pressed')) === 'true'
 }
 
 test.describe('H. Toolbar button state sync', () => {

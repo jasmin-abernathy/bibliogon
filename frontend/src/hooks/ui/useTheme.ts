@@ -17,6 +17,10 @@ function getInitialAppTheme(): string {
     // the CSS always matches a real rule block.
     const stored = localStorage.getItem("atelier-epub-app-theme");
     if (stored && isKnownPalette(stored)) return stored;
+
+    const legacyStored = localStorage.getItem("bibliogon-app-theme");
+    if (legacyStored && isKnownPalette(legacyStored)) return legacyStored;
+
     return DEFAULT_PALETTE;
 }
 

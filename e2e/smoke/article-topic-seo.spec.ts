@@ -126,18 +126,23 @@ test.describe("AR-02 Phase 2.1 topic + SEO", () => {
         const article = await postJson<{id: string}>("/articles", {title: "SEO Test"});
         await page.goto(`/articles/${article.id}`);
 
-        // Wait for the (debounced) autosave PATCH carrying both fields,
-        // deterministically, instead of a fixed sleep.
-        const seoSaved = page.waitForResponse(
+        const titleSaved = page.waitForResponse(
             (r) =>
                 r.url().includes(`/articles/${article.id}`) &&
                 r.request().method() === "PATCH",
         );
         await page.getByTestId("article-editor-seo-title").fill("Custom SEO Headline");
         await page.getByTestId("article-editor-seo-title").blur();
+        await titleSaved;
+
+        const descriptionSaved = page.waitForResponse(
+            (r) =>
+                r.url().includes(`/articles/${article.id}`) &&
+                r.request().method() === "PATCH",
+        );
         await page.getByTestId("article-editor-seo-description").fill("Snippet for search.");
         await page.getByTestId("article-editor-seo-description").blur();
-        await seoSaved;
+        await descriptionSaved;
 
         await page.reload();
         await expect(page.getByTestId("article-editor-seo-title")).toHaveValue("Custom SEO Headline");

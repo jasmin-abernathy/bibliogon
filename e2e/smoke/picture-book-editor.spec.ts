@@ -29,7 +29,7 @@ const API = "http://localhost:8000/api"
  * local author profile.
  */
 async function fillAuthor(page: Page, name: string) {
-    const input = page.getByPlaceholder("Autorenname oder Pen Name")
+    const input = page.getByTestId("create-book-author")
     const select = page.getByTestId("create-book-author-select")
     await Promise.race([
         input.waitFor({state: "visible", timeout: 5000}).catch(() => {}),
@@ -219,9 +219,7 @@ test.describe("Picture-Book PageEditor smoke", () => {
         await expect(page.getByTestId("create-book-mode-template")).toHaveCount(0)
 
         // Fill the required fields + submit.
-        await page
-            .getByPlaceholder("Der Titel deines Buches")
-            .fill("Smoke Picture Book")
+        await page.getByTestId("create-book-title").fill("Smoke Picture Book")
         await fillAuthor(page, "Smoke Author")
         await page.getByTestId("create-book-submit").click()
 
@@ -256,9 +254,7 @@ test.describe("Picture-Book PageEditor smoke", () => {
             page.getByTestId("create-book-mode-template"),
         ).toBeVisible()
 
-        await page
-            .getByPlaceholder("Der Titel deines Buches")
-            .fill("Smoke Prose Book")
+        await page.getByTestId("create-book-title").fill("Smoke Prose Book")
         await fillAuthor(page, "Smoke Author")
         await page.getByTestId("create-book-submit").click()
 
@@ -453,9 +449,7 @@ test.describe("Picture-Book PageEditor smoke", () => {
         // button (regression on Session 3 Commit 9's split-button).
         await page.goto("/")
         await page.getByTestId("new-book-btn").click()
-        await page
-            .getByPlaceholder("Der Titel deines Buches")
-            .fill("Prose Metadata Smoke")
+        await page.getByTestId("create-book-title").fill("Prose Metadata Smoke")
         await fillAuthor(page, "Author")
         await page.getByTestId("create-book-submit").click()
 

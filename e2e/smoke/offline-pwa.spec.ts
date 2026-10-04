@@ -485,8 +485,8 @@ test.describe("Offline PWA (Dexie mode)", () => {
         // Opening it shows the seeded chapter structure (Prolog + Kapitel 1).
         await page.getByText("Mein Roman").first().click();
         await page.waitForURL(/\/book\//);
-        await expect(page.getByText("Prolog").first()).toBeVisible({ timeout: 10000 });
-        await expect(page.getByText("Kapitel 1").first()).toBeVisible();
+        await expect(page.getByText(/Prolog|Prologue/).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/Kapitel 1|Chapter 1/).first()).toBeVisible();
     });
 
     test("save-as-template works offline and the saved one creates a book (#730)", async ({
