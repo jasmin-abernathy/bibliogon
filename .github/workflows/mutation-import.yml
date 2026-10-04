@@ -1,5 +1,8 @@
 name: Mutation Testing (Import Orchestrator)
 
+# Fork policy (jasmin-abernathy/bibliogon): automatic cron runs are intentionally disabled here.
+# The inherited upstream comments may describe schedules; use workflow_dispatch for one-off runs in this fork.
+
 # Scoped mutmut run for the core import orchestrator and its handlers.
 # Issue context:
 #   - app/import_plugins/ + app/routers/import_orchestrator.py have strong
@@ -30,8 +33,6 @@ name: Mutation Testing (Import Orchestrator)
 # a silent non-run impossible; the kill switch is preserved, just inverted.
 
 on:
-  schedule:
-    - cron: "0 2 * * *"  # 02:00 UTC nightly
   workflow_dispatch:
     inputs:
       paths:
