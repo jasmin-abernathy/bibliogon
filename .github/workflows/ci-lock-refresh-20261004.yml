@@ -1,0 +1,64 @@
+name: CI lock refresh 2026-10-04
+
+on:
+  push:
+    branches:
+      - fix/ci-audit-20261004
+    paths:
+      - .github/workflows/ci-lock-refresh-20261004.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-locks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/ci-audit-20261004
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Refresh compatible Python dependency locks
+        working-directory: backend
+        run: poetry update --lock
+
+      - name: Validate Python security scan
+        working-directory: backend
+        run: |
+          poetry install --no-interaction --no-ansi
+          poetry run python -m pip install --upgrade "pip>=26.2"
+          IGNORE=$(poetry run python ../scripts/security_ignore_args.py)
+          poetry run pip-audit --skip-editable $IGNORE
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Refresh npm lockfile within declared ranges
+        working-directory: frontend
+        run: |
+          npm audit fix --package-lock-only || true
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Commit refreshed lockfiles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/poetry.lock frontend/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile changes required."
+            exit 0
+          fi
+          git commit -m "chore(security): refresh dependency locks [skip ci]"
+          git push origin HEAD:fix/ci-audit-20261004
