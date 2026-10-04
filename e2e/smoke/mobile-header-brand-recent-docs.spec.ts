@@ -43,7 +43,7 @@ function brand(page: Page) {
     return page.getByTestId("dashboard-header").getByText("Atelier EPUB");
 }
 
-test.describe("#392 - brand text hidden on mobile, visible on tablet/desktop", () => {
+test.describe("#392 - primary brand remains visible across viewports", () => {
     test("desktop shows icon + Atelier EPUB text", async ({page}) => {
         await page.setViewportSize({width: DESKTOP, height: 900});
         await page.goto("/");
@@ -51,11 +51,11 @@ test.describe("#392 - brand text hidden on mobile, visible on tablet/desktop", (
         await expect(brand(page)).toBeVisible();
     });
 
-    test("mobile (375px) shows only the icon, no text", async ({page}) => {
+    test("mobile (375px) keeps the Atelier EPUB wordmark visible", async ({page}) => {
         await page.setViewportSize({width: MOBILE, height: 800});
         await page.goto("/");
         await expect(page.getByTestId("dashboard-header")).toBeVisible();
-        await expect(brand(page)).toBeHidden();
+        await expect(brand(page)).toBeVisible();
     });
 
     test("tablet (768px) shows icon + text (above the sm breakpoint)", async ({page}) => {
@@ -73,8 +73,8 @@ test.describe("#392 - brand text hidden on mobile, visible on tablet/desktop", (
             await page.goto("/");
             await expect(
                 brand(page),
-                `brand should be hidden at ${MOBILE}px in palette ${palette}`,
-            ).toBeHidden();
+                `brand should remain visible at ${MOBILE}px in palette ${palette}`,
+            ).toBeVisible();
 
             await page.setViewportSize({width: DESKTOP, height: 900});
             await expect(

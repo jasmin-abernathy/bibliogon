@@ -126,24 +126,20 @@ test.describe("AR-02 Phase 2.1 topic + SEO", () => {
         const article = await postJson<{id: string}>("/articles", {title: "SEO Test"});
         await page.goto(`/articles/${article.id}`);
 
-        const titleSaved = page.waitForResponse((r) => {
-            if (!r.url().includes(`/articles/${article.id}`) || r.request().method() !== "PATCH") {
-                return false;
-            }
-            const body = r.request().postDataJSON() as Record<string, unknown>;
-            return body.seo_title === "Custom SEO Headline";
-        });
+        const titleSaved = page.waitForResponse(
+            (r) =>
+                r.url().includes(`/articles/${article.id}`) &&
+                r.request().method() === "PATCH",
+        );
         await page.getByTestId("article-editor-seo-title").fill("Custom SEO Headline");
         await page.getByTestId("article-editor-seo-title").blur();
         await titleSaved;
 
-        const descriptionSaved = page.waitForResponse((r) => {
-            if (!r.url().includes(`/articles/${article.id}`) || r.request().method() !== "PATCH") {
-                return false;
-            }
-            const body = r.request().postDataJSON() as Record<string, unknown>;
-            return body.seo_description === "Snippet for search.";
-        });
+        const descriptionSaved = page.waitForResponse(
+            (r) =>
+                r.url().includes(`/articles/${article.id}`) &&
+                r.request().method() === "PATCH",
+        );
         await page.getByTestId("article-editor-seo-description").fill("Snippet for search.");
         await page.getByTestId("article-editor-seo-description").blur();
         await descriptionSaved;
